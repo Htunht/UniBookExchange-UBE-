@@ -1,72 +1,135 @@
-# Welcome to your Expo app 👋
+# UniBookExchange (UBE)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+UniBookExchange is a cross-platform app for university students to discover, buy, sell, and exchange textbooks. It is built with Expo and React Native, with an Express API and PostgreSQL database.
 
-## Backend (Express, Resend, Prisma)
+## Features
 
-The app's email OTP and profile API lives in `server/`. The backend uses PostgreSQL through Prisma and sends one-time codes through Resend. In Resend test mode, set `RESEND_TEST_RECIPIENT` to the email address authorized by your Resend account; arbitrary recipients require a verified sending domain.
+- Create an account and sign in with email verification
+- Reset a forgotten password using an email OTP
+- Browse books and filter by major, year, or search term
+- Post and manage your own book listings
+- Request and manage appointments with buyers or sellers
+- Mark listings as available or sold
+- View and update your student profile
+- Responsive layouts for mobile screens and web
 
-1. Create a PostgreSQL database and copy `server/.env.example` to `server/.env`. Set `DATABASE_URL`, `RESEND_API_KEY`, `RESEND_TEST_RECIPIENT`, and a random `OTP_SECRET` of at least 32 characters.
-2. From `server/`, run `npm install`, `npm run db:generate`, and `npm run db:migrate`.
-3. Start the API with `npm run dev`. It listens on port 4000 by default.
-4. Create `.env.local` in the project root and set `EXPO_PUBLIC_API_URL` to the backend URL reachable by the app. Use `http://localhost:4000` for web on the same computer, `http://10.0.2.2:4000` for the standard Android emulator, or your computer's LAN IP for a physical device on the same network.
-5. Start Expo with `npx expo start`.
+## Tech stack
 
-Keep the Resend API key and database URL on the backend only. For production, deploy the API and PostgreSQL database, use HTTPS, and configure the app's API URL to the deployed service.
+- **App:** Expo SDK 58, React Native, Expo Router, TypeScript
+- **API:** Node.js, Express, TypeScript
+- **Database:** PostgreSQL with Prisma ORM
+- **Email:** Resend for OTP delivery
 
-The current Resend test configuration only sends OTP email to `RESEND_TEST_RECIPIENT`. For local testing with another address, set `DEV_OTP_LOGGING=true` in `server/.env`; outside production, the OTP is written to the API terminal and is never returned to the app. Set `NODE_ENV=production` in production (OTP logging is always disabled there). Before enabling email delivery for other addresses, configure a verified Resend sender domain and update the server's sender address and recipient policy.
+## Requirements
 
-When deploying schema changes to production, apply committed migrations with `npx prisma migrate deploy` from `server/` before restarting the API. Do not use `migrate reset` on production data.
+- Node.js and npm
+- A PostgreSQL database
+- A Resend account and API key for email OTP delivery
 
-## Get started
+## Getting started
 
-1. Install dependencies
+### 1. Configure the API
 
-   ```bash
-   npm install
-   ```
+In PowerShell, from the repository root:
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```powershell
+Copy-Item server\.env.example server\.env
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Update `server/.env` with your own values:
 
-### Other setup steps
+```env
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require
+RESEND_API_KEY=your_resend_api_key
+RESEND_TEST_RECIPIENT=your_test_email@example.com
+OTP_SECRET=replace_with_a_random_secret_at_least_32_bytes_long
+PORT=4000
+DEV_OTP_LOGGING=false
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Keep `server/.env` private; never commit API keys, database credentials, or other secrets.
 
-## Learn more
+Install the API dependencies, generate the Prisma client, and apply the development migrations:
 
-To learn more about developing your project with Expo, look at the following resources:
+```powershell
+cd server
+npm install
+npm run db:generate
+npm run db:migrate
+npm run dev
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The API listens on port `4000` by default. Check that it is running at `http://localhost:4000/health`.
 
-## Join the community
+### 2. Configure and run the app
 
-Join our community of developers creating universal apps.
+Create `.env.local` in the repository root:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```env
+EXPO_PUBLIC_API_URL=http://localhost:4000
+```
+
+Choose a URL reachable from the device running the app:
+
+- Web on the same computer: `http://localhost:4000`
+- Standard Android emulator: `http://10.0.2.2:4000`
+- Physical device: `http://<your-computer-lan-ip>:4000`
+
+In a second terminal, from the repository root:
+
+```powershell
+npm install
+npx expo start
+```
+
+Use the Expo CLI prompts to open the app on a device, emulator, or web browser. You can also run `npm run web` for web or `npm run android` for Android.
+
+## OTP testing and production email
+
+Resend's default test sender is restricted to the recipient allowed by your Resend account. Set `RESEND_TEST_RECIPIENT` to that address for local testing.
+
+For local development only, `DEV_OTP_LOGGING=true` allows non-test OTPs to be printed in the API terminal when `NODE_ENV` is not `production`. Do not enable this in production; the server disables development OTP logging in production.
+
+Before production deployment, configure a verified sending domain and a production-safe sender and recipient policy. Do not rely on a single test inbox to deliver password-reset codes to all users. Deploy the API behind HTTPS, use production database credentials, set `NODE_ENV=production`, and configure the app's `EXPO_PUBLIC_API_URL` to the deployed API.
+
+For production database updates, apply committed migrations from the `server` directory:
+
+```powershell
+npx prisma migrate deploy
+```
+
+Do not use `prisma migrate reset` on production data.
+
+## Checks
+
+Run the app tests and TypeScript check from the repository root:
+
+```powershell
+npm test
+npx tsc --noEmit
+```
+
+Run the API tests and type check from `server`:
+
+```powershell
+npm test
+npm run typecheck
+```
+
+## Project structure
+
+```text
+src/
+  app/          Expo Router routes
+  components/   App screens and reusable UI
+  services/     API client
+  utils/        Shared utilities and tests
+server/
+  prisma/       Database schema and migrations
+  src/          Express API
+  tests/        API tests
+```
+
+## License
+
+No license has been specified yet. All rights are reserved unless a license is added to this repository.
