@@ -1,0 +1,111 @@
+{
+  "planHash": "c6f8cc1861232ba2a1154f225c9c0d619eeac1cb5518e316fddfeaa4770dcdb0",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-11-05T16:50:05.4433092Z",
+  "retryCount": 0,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 2842,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "typescript-check",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "",
+        "durationMs": 5009
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E unibookexchange@1.0.0 test\r\n\u003E vitest run src/utils/bookSorting.test.ts\r\n\r\n\r\n RUN  v5.1.0 D:/React Native/UniBookExchange\r\n\r\n\r\n Test Files  1 passed (1)\r\n      Tests  3 passed (3)\r\n   Start at  23:19:56\r\n   Duration  240ms (import 32%, tests 31%, transform 24%, worker 13%, environment 1%)\r\n\r\n",
+        "durationMs": 1201,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "package_json",
+          "testsTotal": 3,
+          "testsPassed": 3,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "expo-web-home-responds",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!DOCTYPE html\u003E\u003Chtml lang=\u0022en\u0022\u003E\u003Chead\u003E\u003Cmeta charSet=\u0022utf-8\u0022/\u003E\u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1, shrink-to-fit=no\u0022/\u003E\u003Cmeta http-equiv=\u0022X-UA-Compatible\u0022 content=\u0022IE=edge\u0022/\u003E\u003Clink rel=\u0022preload\u0022 href=\u0022/node_modules/expo-router/entry.bundle?platform=web\u0026amp;dev=true\u0026amp;hot=false\u0026amp;lazy=true\u0026amp;transform.asyncRoutes=true\u0026amp;transform.routerRoot=src%2Fapp\u0026amp;transform.reactCompiler=true\u0022 as=\u0022script\u0022/\u003E\u003Cstyle id=\u0022expo-reset\u0022\u003E#root,body,html{height:100%}body{overflow:hidden}#root{display:flex}\u003C/style\u003E\u003Cstyle id=\u0022react-native-stylesheet\u0022\u003E[stylesheet-group=\u00220\u0022]{}\nbody{margin:0;}\nbutton::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0;}\nhtml{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:rgba(0,0,0,0);}\ninput::-webkit-search-cancel-button,input::-webkit-search-decoration,input::-webkit-search-results-button,input::-webkit-search-results-decoration{display:none;}\n[stylesheet-group=\u00221\u0022]{}\n.css-accessibilityImage-9pa8cd{bottom:0px;height:100%;left:0px;opacity:0;position:absolute;right:0px;top:0px;width:100%;z-index:-1;}\n.css-text-146c3p1{background-color:rgba(0,0,0,0.00);border:0 solid black;box-sizing:border-box;color:rgba(0,0,0,1.00);display:inline;font:14px -apple-system,BlinkMacSystemFont,\u0022Segoe UI\u0022,Roboto,Helvetica,Arial,sans-serif;list-style:none;margin:0px;padding:0px;position:relative;text-align:start;text-decoration:none;white-space:pre-wrap;word-wrap:break-word;}\n.css-textHasAncestor-1jxf684{background-color:rgba(0,0,0,0.00);border:0 solid black;box-sizing:border-box;color:inherit;display:inline;font:inherit;list-style:none;margin:0px;padding:0px;position:relative;text-align:inherit;text-decoration:none;white-space:inherit;word-wrap:break-word;}\n.css-textinput-11aywtz{-moz-appearance:textfield;-webkit-appearance:none;background-color:rgba(0,0,0,0.00);border-bottom-left-radius:0px;border-bottom-right-radius:0px;border-top-left-radius:0px;border-top-right-radius:0px;border:0 solid black;box-sizing:border-box;font:14px -apple-system,BlinkMacSystemFont,\u0022Segoe UI\u0022,Roboto,Helvetica,Arial,sans-serif;margin:0px;padding:0px;resize:none;}\n.css-view-g5y9jx{align-content:flex-start;align-items:stretch;background-color:rgba(0,0,0,0.00);border:0 solid black;box-sizing:border-box;display:flex;flex-basis:auto;flex-direction:column;flex-shrink:0;list-style:none;margin:0px;min-height:0px;min-width:0px;padding:0px;position:relative;text-decoration:none;z-index:0;}\n[stylesheet-group=\u00222\u0022]{}\n.r-borderColor-11mg6pl{border-bottom-color:rgba(255,255,255,1.00);border-left-color:rgba(255,255,255,1.00);border-right-color:rgba(255,255,255,1.00);border-top-color:rgba(255,255,255,1.00);}\n.r-borderColor-16cv7a7{border-bottom-color:rgba(187,247,208,1.00);border-left-color:rgba(187,247,208,1.00);border-right-color:rgba(187,247,208,1.00);border-top-color:rgba(187,247,208,1.00);}\n.r-borderColor-18t5edp{border-bottom-color:rgba(253,230,138,1.00);border-left-color:rgba(253,230,138,1.00);border-right-color:rgba(253,230,138,1.00);border-top-color:rgba(253,230,138,1.00);}\n.r-borderColor-1awa8pu{border-bottom-color:rgba(101,119,134,1.00);border-left-color:rgba(101,119,134,1.00);border-right-color:rgba(101,119,134,1.00);border-top-color:rgba(101,119,134,1.00);}\n.r-borderColor-1d4xg89{border-bottom-color:rgba(170,184,194,1.00);border-left-color:rgba(170,184,194,1.00);border-right-color:rgba(170,184,194,1.00);border-top-color:rgba(170,184,194,1.00);}\n.r-borderColor-1jyn79y{border-bottom-color:rgba(0,150,136,1.00);border-left-color:rgba(0,150,136,1.00);border-right-color:rgba(0,150,136,1.00);border-top-color:rgba(0,150,136,1.00);}\n.r-borderColor-1ropktw{border-bottom-color:rgba(203,213,225,1.00);border-left-color:rgba(203,213,225,1.00);border-right-color:rgba(203,213,225,1.00);border-top-color:rgba(203,213,225,1.00);}\n.r-borderColor-1rvyss1{border-bottom-color:rgba(255,255,255,0.20);border-left-color:rgba(255,255,255,0.20);border-right-color:rgba(255,255,255,0.20);border-top-color:rgba(255,255,255,0.20);}\n.r-borderColor-1ucinvm{border-bottom-color:rgba(15,23,42,1.00);border-left-c\n\u2026[truncated]",
+        "durationMs": 9074
+      }
+    ],
+    "executions": [
+      {
+        "source": "setup[0]",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "install"
+        ],
+        "cwd": "D:\\React Native\\UniBookExchange",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "typescript-check",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npx.CMD",
+        "args": [
+          "tsc",
+          "--noEmit"
+        ],
+        "cwd": "D:\\React Native\\UniBookExchange",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "D:\\React Native\\UniBookExchange",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "expo-web-home-responds",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "web",
+          "--",
+          "--port",
+          "8199"
+        ],
+        "cwd": "D:\\React Native\\UniBookExchange",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

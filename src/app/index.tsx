@@ -1,98 +1,223 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// src/app/index.tsx
+import { useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { SymbolView } from "expo-symbols";
+import DashboardView from "../components/DashboardView";
+import ForgotPasswordFlow from "../components/ForgotPasswordFlow";
+import LoginForm from "../components/LoginForm";
+import RegisterOtpScreen from "../components/RegisterOtpScreen";
+import RegisterWizard from "../components/RegisterWizard";
+import {
+  RegisterInput,
+  UserProfile,
+  loginUser,
+  registerUser,
+  requestPasswordReset,
+  resetPassword,
+  resendRegistrationOtp,
+  verifyPasswordResetOtp,
+  verifyRegistrationOtp,
+} from "../services/api";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+type AuthMode = "LOGIN" | "REGISTER" | "REGISTER_OTP" | "FORGOT_PASSWORD";
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
+export default function AuthScreen() {
+  const [authMode, setAuthMode] = useState<AuthMode>("LOGIN");
+  const [sessionToken, setSessionToken] = useState("");
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // Store register email temporarily for OTP screen
+  const [pendingEmail, setPendingEmail] = useState("");
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // LOGIN
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const handleLogin = async (email: string, password: string) => {
+    const result = await loginUser(email, password);
+    setSessionToken(result.sessionToken);
+    setUserProfile(result.user);
+  };
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // REGISTER (Send OTP)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const handleRegister = async (data: RegisterInput) => {
+    await registerUser(data);
+    setPendingEmail(data.email);
+    setAuthMode("REGISTER_OTP");
+  };
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // VERIFY REGISTRATION OTP → go to Dashboard
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const handleVerifyOtp = async (otp: string) => {
+    const result = await verifyRegistrationOtp(pendingEmail, otp);
+    setSessionToken(result.sessionToken);
+    setUserProfile(result.user);
+  };
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // RESEND OTP
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const handleResendOtp = async () => {
+    await resendRegistrationOtp(pendingEmail);
+  };
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // SIGN OUT
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const handleSignOut = () => {
+    setSessionToken("");
+    setUserProfile(null);
+    setPendingEmail("");
+    setAuthMode("LOGIN");
+  };
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // DASHBOARD (Logged in)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (sessionToken && userProfile) {
     return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+      <DashboardView
+        sessionToken={sessionToken}
+        onSignOut={handleSignOut}
+        initialUserProfile={userProfile}
+      />
     );
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoiding}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <View style={styles.brandContainer}>
+            <View style={styles.brandIcon}>
+              <SymbolView
+                name={{
+                  ios: "books.vertical.fill",
+                  android: "auto_stories",
+                  web: "auto_stories",
+                }}
+                tintColor="#ffffff"
+                size={36}
+              />
+            </View>
+            <Text style={styles.appTitle}>UBE</Text>
+            <Text style={styles.appSubtitle}>UniBookExchange</Text>
+          </View>
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+          {authMode === "LOGIN" && (
+            <LoginForm
+              onLogin={handleLogin}
+              onGoToRegister={() => setAuthMode("REGISTER")}
+              onForgotPassword={() => setAuthMode("FORGOT_PASSWORD")}
+            />
+          )}
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+          {authMode === "REGISTER" && (
+            <RegisterWizard
+              onComplete={handleRegister}
+              onGoToLogin={() => setAuthMode("LOGIN")}
+            />
+          )}
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+          {authMode === "REGISTER_OTP" && (
+            <RegisterOtpScreen
+              email={pendingEmail}
+              onVerify={handleVerifyOtp}
+              onResendOtp={handleResendOtp}
+              onBack={() => setAuthMode("REGISTER")}
+            />
+          )}
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+          {authMode === "FORGOT_PASSWORD" && (
+            <ForgotPasswordFlow
+              onBackToLogin={() => setAuthMode("LOGIN")}
+              onRequestCode={async (email) => {
+                await requestPasswordReset(email);
+              }}
+              onVerifyCode={async (email, otp) => {
+                const result = await verifyPasswordResetOtp(email, otp);
+                return result.resetToken;
+              }}
+              onResetPassword={async (email, resetToken, password) => {
+                await resetPassword(email, resetToken, password);
+              }}
+              onComplete={() => setAuthMode("LOGIN")}
+            />
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    backgroundColor: "#F0F9FF",
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  keyboardAvoiding: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
   },
-  title: {
-    textAlign: 'center',
+  scrollView: {
+    flex: 1,
   },
-  code: {
-    textTransform: 'uppercase',
+  container: {
+    flexGrow: 1,
+    backgroundColor: "#F0F9FF",
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 32,
+    width: "100%",
+    maxWidth: 560,
+    alignSelf: "center",
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  brandContainer: {
+    alignItems: "center",
+    marginBottom: 28,
+  },
+  brandIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    backgroundColor: "#0284C7",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+    shadowColor: "#0284C7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  appTitle: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#0284C7",
+    letterSpacing: 2,
+  },
+  appSubtitle: {
+    fontSize: 13,
+    color: "#64748B",
+    fontWeight: "500",
+    letterSpacing: 0.5,
+    marginTop: 2,
   },
 });

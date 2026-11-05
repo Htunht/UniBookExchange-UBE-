@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AppointmentStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum BookStatus {
+  AVAILABLE
+  SOLD
+}
+
+model User {
+  id                 String        @id @default(cuid())
+  email              String        @unique
+  passwordHash       String?
+  name               String?
+  year               String?
+  major              String?
+  phone              String?
+  telegram           String?
+  isVerified         Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  sessions           Session[]
+  books              Book[]
+  buyerAppointments  Appointment[] @relation("BuyerAppointments")
+  sellerAppointments Appointment[] @relation("SellerAppointments")
+}
+
+model Book {
+  id           String        @id @default(cuid())
+  title        String
+  author       String?
+  major        String
+  year         String
+  price        Int           @default(0)
+  condition    String
+  status       BookStatus     @default(AVAILABLE)
+  description  String?
+  imageUrl     String?
+  sellerId     String
+  seller       User          @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([major])
+  @@index([year])
+  @@index([sellerId])
+}
+
+model Appointment {
+  id        String            @id @default(cuid())
+  bookId    String
+  book      Book              @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  buyerId   String
+  buyer     User              @relation("BuyerAppointments", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId  String
+  seller    User              @relation("SellerAppointments", fields: [sellerId], references: [id], onDelete: Cascade)
+  status    AppointmentStatus @default(PENDING)
+  note      String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([bookId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+}
+
+model EmailOtp {
+  email      String   @id
+  tokenHash  String
+  expiresAt  DateTime
+  attempts   Int      @default(0)
+  lastSentAt DateTime
+}
+
+model PasswordResetOtp {
+  email               String   @id
+  tokenHash           String
+  expiresAt           DateTime
+  attempts            Int      @default(0)
+  lastSentAt          DateTime
+  resetTokenHash      String?
+  resetTokenExpiresAt DateTime?
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}

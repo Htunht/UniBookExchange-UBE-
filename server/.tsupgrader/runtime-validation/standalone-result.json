@@ -1,0 +1,136 @@
+{
+  "planHash": "81264058701e36b805b3f45de3b6dfb7e7aabf592fdbc7cc4aec4f97ac7730e9",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-11-05T15:57:39.1975266Z",
+  "retryCount": 0,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 3156,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "typecheck",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E unibookexchange-api@1.0.0 typecheck\r\n\u003E tsc --noEmit -p tsconfig.json\r\n\r\n",
+        "durationMs": 2944
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E unibookexchange-api@1.0.0 test\r\n\u003E vitest run tests/book-status.test.ts\r\n\r\n\r\n RUN  v5.1.0 D:/React Native/UniBookExchange/server\r\n\r\n\r\n Test Files  1 passed (1)\r\n      Tests  5 passed (5)\r\n   Start at  22:27:33\r\n   Duration  233ms (import 42%, transform 29%, worker 17%, tests 11%, environment 1%)\r\n\r\n",
+        "durationMs": 1566,
+        "testResults": {
+          "testFramework": "vitest",
+          "runnerDetectedFrom": "package_json",
+          "testsTotal": 5,
+          "testsPassed": 5,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": false
+        }
+      },
+      {
+        "name": "health-endpoint",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n{\u0022status\u0022:\u0022ok\u0022}\n--- server output ---\n\r\n\u003E unibookexchange-api@1.0.0 dev\r\n\u003E tsx watch src/index.ts\r\n\r\nUniBookExchange API listening on port 4100\r\n",
+        "durationMs": 2074
+      },
+      {
+        "name": "books-read-endpoint",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n{\u0022books\u0022:[{\u0022id\u0022:\u0022cmw3pjkcz0006q8vcbcpjzikt\u0022,\u0022title\u0022:\u0022Myanmar\u0022,\u0022author\u0022:\u0022\u0022,\u0022major\u0022:\u0022Civil\u0022,\u0022year\u0022:\u00222nd Year\u0022,\u0022price\u0022:0,\u0022condition\u0022:\u0022Brand New\u0022,\u0022status\u0022:\u0022AVAILABLE\u0022,\u0022description\u0022:\u0022\u0022,\u0022imageUrl\u0022:null,\u0022sellerId\u0022:\u0022cmw3hgnod00001gvcn5uon8q9\u0022,\u0022createdAt\u0022:\u00222026-11-05T15:35:46.643Z\u0022,\u0022updatedAt\u0022:\u00222026-11-05T15:35:46.643Z\u0022,\u0022seller\u0022:{\u0022id\u0022:\u0022cmw3hgnod00001gvcn5uon8q9\u0022,\u0022year\u0022:\u00224th Year\u0022}},{\u0022id\u0022:\u0022cmw3pcvcf0004q8vchhdni4mh\u0022,\u0022title\u0022:\u0022Maths\u0022,\u0022author\u0022:\u0022\u0022,\u0022major\u0022:\u0022ME\u0022,\u0022year\u0022:\u00225th Year\u0022,\u0022price\u0022:20000,\u0022condition\u0022:\u0022Good\u0022,\u0022status\u0022:\u0022AVAILABLE\u0022,\u0022description\u0022:\u0022\u0022,\u0022imageUrl\u0022:null,\u0022sellerId\u0022:\u0022cmw3pbl150001q8vcuag0wskt\u0022,\u0022createdAt\u0022:\u00222026-11-05T15:30:34.287Z\u0022,\u0022updatedAt\u0022:\u00222026-11-05T15:30:34.287Z\u0022,\u0022seller\u0022:{\u0022id\u0022:\u0022cmw3pbl150001q8vcuag0wskt\u0022,\u0022year\u0022:\u00225th Year\u0022}},{\u0022id\u0022:\u0022cmw3lahbo000198vcguqb5163\u0022,\u0022title\u0022:\u0022English\u0022,\u0022author\u0022:\u0022\u0022,\u0022major\u0022:\u0022CEIT\u0022,\u0022year\u0022:\u00224th Year\u0022,\u0022price\u0022:0,\u0022condition\u0022:\u0022Good\u0022,\u0022status\u0022:\u0022SOLD\u0022,\u0022description\u0022:\u0022\u1005\u102C\u1021\u102F\u1015\u103A \u1014\u100A\u103A\u1038\u1014\u100A\u103A\u1038\u1005\u102F\u1010\u103A\u200B\u1014\u1031\u1015\u103C\u102E\u0022,\u0022imageUrl\u0022:null,\u0022sellerId\u0022:\u0022cmw3hgnod00001gvcn5uon8q9\u0022,\u0022createdAt\u0022:\u00222026-11-05T13:36:44.340Z\u0022,\u0022updatedAt\u0022:\u00222026-11-05T15:43:46.983Z\u0022,\u0022seller\u0022:{\u0022id\u0022:\u0022cmw3hgnod00001gvcn5uon8q9\u0022,\u0022year\u0022:\u00224th Year\u0022}}]}\n--- server output ---\n\r\n\u003E unibookexchange-api@1.0.0 dev\r\n\u003E tsx watch src/index.ts\r\n\r\nUniBookExchange API listening on port 4100\r\n(node:26980) Warning: SECURITY WARNING: The SSL modes \u0027prefer\u0027, \u0027require\u0027, and \u0027verify-ca\u0027 are treated as aliases for \u0027verify-full\u0027.\r\nIn the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.\r\n\r\nTo prepare for this change:\r\n- If you want the current behavior, explicitly use \u0027sslmode=verify-full\u0027\r\n- If you want libpq compatibility now, use \u0027uselibpqcompat=true\u0026sslmode=require\u0027\r\n\r\nSee https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.\r\n(Use \u0060node --trace-warnings ...\u0060 to show where the warning was created)\r\n",
+        "durationMs": 3651
+      }
+    ],
+    "executions": [
+      {
+        "source": "setup[0]",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "install"
+        ],
+        "cwd": "D:\\React Native\\UniBookExchange\\server",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "typecheck",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "typecheck"
+        ],
+        "cwd": "D:\\React Native\\UniBookExchange\\server",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "D:\\React Native\\UniBookExchange\\server",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "health-endpoint",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "D:\\React Native\\UniBookExchange\\server",
+        "env": {
+          "PORT": "4100"
+        },
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "books-read-endpoint",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev"
+        ],
+        "cwd": "D:\\React Native\\UniBookExchange\\server",
+        "env": {
+          "PORT": "4100"
+        },
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}
