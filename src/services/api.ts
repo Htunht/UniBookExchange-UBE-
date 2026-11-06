@@ -141,24 +141,8 @@ export interface OtpRequestResponse {
 
 export function registerUser(
   data: RegisterInput,
-): Promise<OtpRequestResponse> {
-  return request("/auth/register", { method: "POST", body: data });
-}
-
-export function verifyRegistrationOtp(
-  email: string,
-  otp: string,
 ): Promise<{ sessionToken: string; user: UserProfile }> {
-  return request("/auth/verify-registration-otp", {
-    method: "POST",
-    body: { email, otp },
-  });
-}
-
-export function resendRegistrationOtp(
-  email: string,
-): Promise<OtpRequestResponse> {
-  return request("/auth/resend-otp", { method: "POST", body: { email } });
+  return request("/auth/register", { method: "POST", body: data });
 }
 
 export function loginUser(

@@ -4,7 +4,7 @@ UniBookExchange is a cross-platform app for university students to discover, buy
 
 ## Features
 
-- Create an account and sign in with email verification
+- Create an account and sign in without registration email verification
 - Reset a forgotten password using an email OTP
 - Browse books and filter by major, year, or search term
 - Post and manage your own book listings
@@ -18,13 +18,13 @@ UniBookExchange is a cross-platform app for university students to discover, buy
 - **App:** Expo SDK 58, React Native, Expo Router, TypeScript
 - **API:** Node.js, Express, TypeScript
 - **Database:** PostgreSQL with Prisma ORM
-- **Email:** Resend for OTP delivery
+- **Email:** Resend for password-reset OTP delivery
 
 ## Requirements
 
 - Node.js and npm
 - A PostgreSQL database
-- A Resend account and API key for email OTP delivery
+- A Resend account and API key for password-reset email OTP delivery
 
 ## Getting started
 
@@ -84,11 +84,11 @@ npx expo start
 
 Use the Expo CLI prompts to open the app on a device, emulator, or web browser. You can also run `npm run web` for web or `npm run android` for Android.
 
-## OTP testing and production email
+## Password-reset OTP and production email
 
 Resend's default test sender is restricted to the recipient allowed by your Resend account. Set `RESEND_TEST_RECIPIENT` to that address for local testing.
 
-For local development only, `DEV_OTP_LOGGING=true` allows non-test OTPs to be printed in the API terminal when `NODE_ENV` is not `production`. Do not enable this in production; the server disables development OTP logging in production.
+For local development only, `DEV_OTP_LOGGING=true` allows password-reset OTPs for non-test recipients to be printed in the API terminal when `NODE_ENV` is not `production`. Registration does not send an OTP. Do not enable development OTP logging in production; the server disables it there.
 
 Before production deployment, configure a verified sending domain and a production-safe sender and recipient policy. Do not rely on a single test inbox to deliver password-reset codes to all users. Deploy the API behind HTTPS, use production database credentials, set `NODE_ENV=production`, and configure the app's `EXPO_PUBLIC_API_URL` to the deployed API.
 

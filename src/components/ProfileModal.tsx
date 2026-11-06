@@ -144,10 +144,11 @@ export default function ProfileModal({
                     tintColor="#0284C7"
                     size={20}
                   />
+                  <Text style={styles.infoSeparator}>-</Text>
                   <View style={styles.infoText}>
                     <Text style={styles.infoLabel}>သင်တန်းနှစ်</Text>
                     <Text style={styles.infoValue}>
-                      {userProfile?.year ? getYearLabel(userProfile.year) : "-"}
+                      - {userProfile?.year ? getYearLabel(userProfile.year) : "-"}
                     </Text>
                   </View>
                 </View>
@@ -158,9 +159,12 @@ export default function ProfileModal({
                     tintColor="#0284C7"
                     size={20}
                   />
+                  <Text style={styles.infoSeparator}>-</Text>
                   <View style={styles.infoText}>
                     <Text style={styles.infoLabel}>ဖုန်းနံပါတ်</Text>
-                    <Text style={styles.infoValue}>{userProfile?.phone || "-"}</Text>
+                    <Text style={styles.infoValue}>
+                      - {userProfile?.phone || "-"}
+                    </Text>
                   </View>
                 </View>
 
@@ -170,10 +174,11 @@ export default function ProfileModal({
                     tintColor="#0284C7"
                     size={20}
                   />
+                  <Text style={styles.infoSeparator}>-</Text>
                   <View style={styles.infoText}>
                     <Text style={styles.infoLabel}>Telegram</Text>
                     <Text style={styles.infoValue}>
-                      {userProfile?.telegram
+                      - {userProfile?.telegram
                         ? `@${userProfile.telegram.replace(/^@/, "")}`
                         : "-"}
                     </Text>
@@ -278,17 +283,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 20,
+    padding: 16,
     maxHeight: "92%",
   },
   content: {
-    paddingBottom: 8,
+    paddingBottom: 4,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 10,
   },
   headerTitle: {
     flex: 1,
@@ -308,9 +313,9 @@ const styles = StyleSheet.create({
   profileCard: {
     backgroundColor: "#F3F4F6",
     borderRadius: 16,
-    padding: 16,
+    padding: 12,
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 12,
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
@@ -318,13 +323,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     backgroundColor: "#0284C7",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   avatarText: {
     fontSize: 24,
@@ -340,43 +345,49 @@ const styles = StyleSheet.create({
   emailText: {
     fontSize: 13,
     color: "#64748B",
-    marginBottom: 14,
+    marginBottom: 8,
   },
   infoGrid: {
     width: "100%",
     backgroundColor: "transparent",
     borderRadius: 12,
-    paddingTop: 10,
-    gap: 10,
+    paddingTop: 4,
+    gap: 4,
   },
   infoItem: {
     flexDirection: "row",
-    justifyContent: "flex-start",
     alignItems: "center",
-    paddingVertical: 6,
-    gap: 12,
+    paddingVertical: 3,
+    gap: 10,
   },
   infoText: {
     flex: 1,
-    alignItems: "flex-end",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  infoSeparator: {
+    fontSize: 13,
+    color: "#64748B",
+    fontWeight: "600",
   },
   infoLabel: {
     fontSize: 13,
     color: "#64748B",
     fontWeight: "600",
-    textAlign: "right",
+    textAlign: "left",
   },
   infoValue: {
     fontSize: 13,
     color: "#0F172A",
     fontWeight: "700",
-    textAlign: "right",
+    textAlign: "left",
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 15,
@@ -389,7 +400,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   emptyContainer: {
-    padding: 30,
+    padding: 18,
     alignItems: "center",
     backgroundColor: "#F8FAFC",
     borderRadius: 12,
@@ -398,7 +409,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyEmoji: {
-    marginBottom: 8,
+    marginBottom: 4,
   },
   emptyText: {
     fontSize: 14,

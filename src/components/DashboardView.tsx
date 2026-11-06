@@ -1,12 +1,8 @@
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
-  RefreshControl,
   StyleSheet,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -29,10 +25,11 @@ import {
 } from "../services/api";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { sortBooks, type BookSort } from "../utils/bookSorting";
-import { getMajorLabel, getYearLabel } from "../utils/labels";
 import AddBookModal from "./AddBookModal";
 import AppointmentsModal from "./AppointmentsModal";
-import BookCard from "./BookCard";
+import BookSearchFilters from "./BookSearchFilters";
+import DashboardBookFeed from "./DashboardBookFeed";
+import DashboardHeader from "./DashboardHeader";
 import BookDetailModal from "./BookDetailModal";
 import ProfileModal from "./ProfileModal";
 import SideBarDrawer, { ActiveTab } from "./SideBarDrawer";
@@ -42,22 +39,6 @@ interface DashboardViewProps {
   onSignOut: () => void;
   initialUserProfile?: UserProfile | null;
 }
-
-const MAJOR_FILTERS = ["All", "CEIT", "EC", "EP", "Civil", "Archi", "ME", "MC"];
-const YEAR_FILTERS = [
-  "All Years",
-  "1st Year",
-  "2nd Year",
-  "3rd Year",
-  "4th Year",
-  "5th Year",
-  "Final Year",
-];
-const SORT_OPTIONS = [
-  { value: "newest", label: "အသစ်တင်ထားမှု" },
-  { value: "price-asc", label: "ဈေးနည်းမှ များသို့" },
-  { value: "price-desc", label: "ဈေးများမှ နည်းသို့" },
-] as const;
 
 export default function DashboardView({
   sessionToken,
@@ -229,355 +210,50 @@ export default function DashboardView({
   const displayedBooks = useMemo(() => {
     return sortBooks(activeTab === "my-books" ? myBooks : books, bookSort);
   }, [activeTab, bookSort, books, myBooks]);
-  const activeFilterCount =
-    Number(selectedMajor !== "All") + Number(selectedYear !== "All Years");
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Top Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            {/* Open the navigation drawer */}
-            <TouchableOpacity
-              style={styles.hamburgerBtn}
-              onPress={() => setDrawerVisible(true)}
-              activeOpacity={0.7}
-            >
-              <SymbolView
-                name={{ ios: "line.3.horizontal", android: "menu", web: "menu" }}
-                tintColor="#334155"
-                size={21}
-              />
-            </TouchableOpacity>
-
-            <View style={styles.brandContainer}>
-              <View style={styles.appTitleRow}>
-                <SymbolView
-                  name={{ ios: "books.vertical.fill", android: "auto_stories", web: "auto_stories" }}
-                  tintColor="#0284C7"
-                  size={20}
-                />
-                <Text style={styles.appTitle}>UBE</Text>
-              </View>
-              <Text style={styles.tabBadge}>
-                {activeTab === "shelf" ? "စာအုပ်စင်" : "မိမိစာအုပ်များ"}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.headerRight}>
-            {/* Notification / Appointments Bell */}
-            <TouchableOpacity
-              style={styles.bellBtn}
-              onPress={() => setAppointmentsModalVisible(true)}
-            >
-              <SymbolView
-                name={{ ios: "bell.fill", android: "notifications", web: "notifications" }}
-                tintColor="#475569"
-                size={20}
-              />
-              {pendingIncomingCount > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeCount}>
-                    {pendingIncomingCount > 9 ? "9+" : pendingIncomingCount}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-
-            {/* Profile Avatar Button */}
-            <TouchableOpacity
-              style={styles.profileBtn}
-              onPress={() => setProfileModalVisible(true)}
-            >
-              {userProfile?.name ? (
-                <Text style={styles.profileBtnText}>
-                  {userProfile.name.charAt(0).toUpperCase()}
-                </Text>
-              ) : (
-                <SymbolView
-                  name={{ ios: "person.fill", android: "person", web: "person" }}
-                  tintColor="#ffffff"
-                  size={20}
-                />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+        <DashboardHeader
+          activeTab={activeTab}
+          pendingAppointmentsCount={pendingIncomingCount}
+          userProfile={userProfile}
+          onOpenDrawer={() => setDrawerVisible(true)}
+          onOpenAppointments={() => setAppointmentsModalVisible(true)}
+          onOpenProfile={() => setProfileModalVisible(true)}
+        />
 
         {/* Search and collapsible filters (Book Shelf only) */}
         {activeTab === "shelf" && (
-          <View style={styles.searchFilterCard}>
-            <View style={styles.searchToolbar}>
-              <View style={styles.searchContainer}>
-                <SymbolView
-                  style={styles.searchIcon}
-                  name={{ ios: "magnifyingglass", android: "search", web: "search" }}
-                  tintColor="#64748B"
-                  size={18}
-                />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="စာအုပ်အမည်ဖြင့် ရှာပါ"
-                  placeholderTextColor="#94A3B8"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  returnKeyType="search"
-                  onSubmitEditing={fetchBooks}
-                />
-                {Boolean(searchQuery) && (
-                  <TouchableOpacity
-                    onPress={() => setSearchQuery("")}
-                    style={styles.clearBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="ရှာဖွေမှု ရှင်းရန်"
-                  >
-                    <SymbolView
-                      name={{ ios: "xmark", android: "close", web: "close" }}
-                      tintColor="#94A3B8"
-                      size={16}
-                    />
-                  </TouchableOpacity>
-                )}
-              </View>
-              <TouchableOpacity
-                style={[
-                  styles.filterToggle,
-                  (filtersVisible || activeFilterCount > 0) &&
-                    styles.filterToggleActive,
-                ]}
-                onPress={() => setFiltersVisible((visible) => !visible)}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  filtersVisible
-                    ? "စစ်ထုတ်မှုများ ဖျောက်ရန်"
-                    : "စစ်ထုတ်မှုများ ပြရန်"
-                }
-                accessibilityState={{ expanded: filtersVisible }}
-              >
-                <SymbolView
-                  name={{
-                    ios: "slider.horizontal.3",
-                    android: "tune",
-                    web: "tune",
-                  }}
-                  tintColor={activeFilterCount > 0 ? "#0284C7" : "#475569"}
-                  size={19}
-                />
-                {activeFilterCount > 0 && (
-                  <View style={styles.filterCount}>
-                    <Text style={styles.filterCountText}>
-                      {activeFilterCount}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {filtersVisible && (
-              <View style={styles.filterPanel}>
-                <Text style={styles.filterLabel}>မေဂျာ</Text>
-                <FlatList
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  data={MAJOR_FILTERS}
-                  keyExtractor={(item) => item}
-                  contentContainerStyle={styles.filterList}
-                  renderItem={({ item }) => {
-                    const isActive = selectedMajor === item;
-                    return (
-                      <TouchableOpacity
-                        style={[
-                          styles.filterChip,
-                          isActive && styles.filterChipActive,
-                        ]}
-                        onPress={() => setSelectedMajor(item)}
-                      >
-                        <Text
-                          style={[
-                            styles.filterChipText,
-                            isActive && styles.filterChipTextActive,
-                          ]}
-                        >
-                          {item === "All" ? "အားလုံး" : getMajorLabel(item)}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  }}
-                />
-
-                <Text style={styles.filterLabel}>အစီအစဉ်</Text>
-                <View style={styles.sortOptions}>
-                  {SORT_OPTIONS.map((option) => {
-                    const isActive = bookSort === option.value;
-                    return (
-                      <TouchableOpacity
-                        key={option.value}
-                        style={[
-                          styles.sortChip,
-                          isActive && styles.sortChipActive,
-                        ]}
-                        onPress={() => setBookSort(option.value)}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: isActive }}
-                      >
-                        <Text
-                          style={[
-                            styles.sortChipText,
-                            isActive && styles.sortChipTextActive,
-                          ]}
-                        >
-                          {option.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                <Text style={styles.filterLabel}>သင်တန်းနှစ်</Text>
-                <FlatList
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  data={YEAR_FILTERS}
-                  keyExtractor={(item) => item}
-                  contentContainerStyle={styles.filterList}
-                  renderItem={({ item }) => {
-                    const isActive = selectedYear === item;
-                    return (
-                      <TouchableOpacity
-                        style={[
-                          styles.yearChip,
-                          isActive && styles.yearChipActive,
-                        ]}
-                        onPress={() => setSelectedYear(item)}
-                      >
-                        <Text
-                          style={[
-                            styles.yearChipText,
-                            isActive && styles.yearChipTextActive,
-                          ]}
-                        >
-                          {getYearLabel(item)}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  }}
-                />
-                {activeFilterCount > 0 && (
-                  <TouchableOpacity
-                    style={styles.clearFiltersBtn}
-                    onPress={() => {
-                      setSelectedMajor("All");
-                      setSelectedYear("All Years");
-                    }}
-                  >
-                    <Text style={styles.clearFiltersText}>
-                      ရွေးချယ်မှုများ ရှင်းရန်
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Book Feed List */}
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0284C7" />
-            <Text style={styles.loadingText}>စာအုပ်များ ဖွင့်နေပါသည်...</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={displayedBooks}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.bookList}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-            renderItem={({ item }) => {
-              const isOwnBook = item.sellerId === userProfile?.id;
-              return (
-                <BookCard
-                  book={item}
-                  isOwnBook={isOwnBook}
-                  onPress={() => setSelectedBook(item)}
-                />
-              );
+          <BookSearchFilters
+            searchQuery={searchQuery}
+            selectedMajor={selectedMajor}
+            selectedYear={selectedYear}
+            filtersVisible={filtersVisible}
+            bookSort={bookSort}
+            onSearchChange={setSearchQuery}
+            onSubmitSearch={fetchBooks}
+            onSelectMajor={setSelectedMajor}
+            onSelectYear={setSelectedYear}
+            onSelectSort={setBookSort}
+            onToggleFilters={() => setFiltersVisible((visible) => !visible)}
+            onClearFilters={() => {
+              setSelectedMajor("All");
+              setSelectedYear("All Years");
             }}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <View style={styles.emptyIllustration}>
-                  <View style={styles.emptyIllustrationCircle} />
-                  <View style={styles.emptyBoxIcon}>
-                    <SymbolView
-                      name={{
-                        ios: "shippingbox.fill",
-                        android: "inventory_2",
-                        web: "inventory_2",
-                      }}
-                      tintColor="#0284C7"
-                      size={56}
-                    />
-                  </View>
-                  <View style={styles.emptySearchBadge}>
-                    <SymbolView
-                      name={{
-                        ios: "magnifyingglass",
-                        android: "search",
-                        web: "search",
-                      }}
-                      tintColor="#64748B"
-                      size={20}
-                    />
-                  </View>
-                </View>
-                <Text style={styles.emptyTitle}>
-                  {activeTab === "my-books"
-                    ? "တင်ထားသော စာအုပ် မရှိသေးပါ"
-                    : "စာအုပ် မတွေ့ပါ"}
-                </Text>
-                <Text style={styles.emptySubtitle}>
-                  {activeTab === "my-books"
-                    ? "စာအုပ်တင်ပြီး အခြားကျောင်းသားများနှင့် မျှဝေပါ။"
-                    : "ရှာဖွေထားသော စာအုပ် မတွေ့ပါ။ စာအုပ်အမည် ပြောင်းပြီး ထပ်ရှာကြည့်ပါ။"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.emptyPostBtn}
-                  onPress={() => setAddModalVisible(true)}
-                >
-                  <View style={styles.emptyPostBtnContent}>
-                    <SymbolView
-                      name={{ ios: "plus", android: "add", web: "add" }}
-                      tintColor="#ffffff"
-                      size={17}
-                    />
-                    <Text style={styles.emptyPostBtnText}>စာအုပ်တင်ရန်</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            }
           />
         )}
 
-        {/* Floating Action Button (FAB) */}
-        {!loading && displayedBooks.length > 0 && (
-          <TouchableOpacity
-            activeOpacity={0.85}
-            style={styles.fab}
-            onPress={() => setAddModalVisible(true)}
-            accessibilityRole="button"
-            accessibilityLabel="စာအုပ်အသစ် တင်ရန်"
-          >
-            <SymbolView
-              name={{ ios: "plus", android: "add", web: "add" }}
-              tintColor="#ffffff"
-              size={20}
-            />
-            <Text style={styles.fabText}>စာအုပ်တင်ရန်</Text>
-          </TouchableOpacity>
-        )}
+        <DashboardBookFeed
+          activeTab={activeTab}
+          books={displayedBooks}
+          currentUserId={userProfile?.id}
+          loading={loading}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          onOpenBook={setSelectedBook}
+          onAddBook={() => setAddModalVisible(true)}
+        />
 
         {/* Side Bar Drawer */}
         <SideBarDrawer

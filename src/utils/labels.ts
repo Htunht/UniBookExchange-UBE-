@@ -24,5 +24,6 @@ export function getConditionLabel(condition: string): string {
 }
 
 export function getMajorLabel(major: string): string {
+  if (major === "All Majors") return "မေဂျာအားလုံး";
   return major;
 }

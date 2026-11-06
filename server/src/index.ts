@@ -8,6 +8,7 @@ import { z } from "zod";
 import { prisma } from "./prisma.js";
 import { canRequestBook } from "./book-status.js";
 import { shouldLogDevelopmentOtp } from "./dev-otp.js";
+import { ALL_MAJORS_VALUE, validateCommonCourseListing } from "./course-rules.js";
 
 const requiredEnvironment = [
   "DATABASE_URL",
@@ -103,14 +104,6 @@ app.post("/auth/register", async (request, response) => {
   }
 
   const email = parsed.data.email.toLowerCase();
-  const isTestRecipient = email === allowedTestRecipient;
-  if (!isTestRecipient && !logNonTestOtp) {
-    throw new HttpError(
-      503,
-      "လက်ရှိတွင် စမ်းသပ်အီးမေးလ်လိပ်စာတစ်ခုတည်းကိုသာ အကောင့်ဖွင့်နိုင်ပါသည်။",
-    );
-  }
-
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser && existingUser.isVerified) {
     throw new HttpError(400, "ဤအီးမေးလ်ဖြင့် အကောင့်ဖွင့်ပြီးသား ဖြစ်ပါသည်။ အကောင့်ဝင်ပါ။");
@@ -118,7 +111,7 @@ app.post("/auth/register", async (request, response) => {
 
   const passwordHash = hashPassword(parsed.data.password);
 
-  await prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: { email },
     create: {
       email,
@@ -128,7 +121,7 @@ app.post("/auth/register", async (request, response) => {
       major: parsed.data.major,
       phone: parsed.data.phone,
       telegram: parsed.data.telegram,
-      isVerified: false,
+      isVerified: true,
     },
     update: {
       passwordHash,
@@ -137,58 +130,33 @@ app.post("/auth/register", async (request, response) => {
       major: parsed.data.major,
       phone: parsed.data.phone,
       telegram: parsed.data.telegram,
-      isVerified: false,
+      isVerified: true,
     },
   });
 
-  const now = new Date();
-  const otp = randomInt(100_000, 1_000_000).toString();
-  const tokenHash = createHmac("sha256", otpSecret)
-    .update(`${email}:${otp}`)
+  const sessionToken = randomBytes(32).toString("base64url");
+  const sessionHash = createHmac("sha256", otpSecret)
+    .update(sessionToken)
     .digest("hex");
+  const expiresAt = new Date(Date.now() + sessionLifetimeMs);
 
-  await prisma.emailOtp.upsert({
-    where: { email },
-    create: {
-      email,
-      tokenHash,
-      expiresAt: new Date(now.getTime() + otpLifetimeMs),
-      attempts: 0,
-      lastSentAt: now,
-    },
-    update: {
-      tokenHash,
-      expiresAt: new Date(now.getTime() + otpLifetimeMs),
-      attempts: 0,
-      lastSentAt: now,
-    },
+  await prisma.session.create({
+    data: { tokenHash: sessionHash, userId: user.id, expiresAt },
   });
 
-  if (isTestRecipient) {
-    try {
-      const { error } = await resend.emails.send({
-        from: "UniBookExchange <onboarding@resend.dev>",
-        to: [email],
-        subject: "UniBookExchange အကောင့်ဖွင့်ရန် အတည်ပြုကုဒ်",
-        text: `သင့်အကောင့်ဖွင့်ရန် အတည်ပြုကုဒ်မှာ ${otp} ဖြစ်ပါသည်။ ၁၀ မိနစ်အတွင်း အသုံးပြုပါ။`,
-        html: `<p>သင့်အကောင့်ဖွင့်ရန် အတည်ပြုကုဒ်မှာ</p><p style="font-size:28px;font-weight:bold;letter-spacing:8px">${otp}</p><p>၁၀ မိနစ်အတွင်း အသုံးပြုပါ။</p>`,
-      });
-      if (error) {
-        await prisma.emailOtp.deleteMany({ where: { email, tokenHash } });
-        console.error("Resend registration email failed:", error.message);
-        throw new HttpError(502, "OTP အီးမေးလ် ပို့မရပါ။ ဆာဗာမှတ်တမ်းကို စစ်ဆေးပါ။");
-      }
-    } catch (error) {
-      if (error instanceof HttpError) throw error;
-      await prisma.emailOtp.deleteMany({ where: { email, tokenHash } });
-      console.error("Resend registration email request failed:", error);
-      throw new HttpError(502, "OTP အီးမေးလ် ပို့မရပါ။ ဆာဗာမှတ်တမ်းကို စစ်ဆေးပါ။");
-    }
-  } else {
-    console.warn(`[DEV OTP - registration] ${email}: ${otp}`);
-  }
-
-  response.json({ message: "အတည်ပြုကုဒ် ပို့ပြီးပါပြီ။" });
+  response.json({
+    sessionToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      year: user.year,
+      major: user.major,
+      phone: user.phone,
+      telegram: user.telegram,
+      createdAt: user.createdAt,
+    },
+  });
 });
 
 const verifyRegistrationSchema = z.object({
@@ -852,7 +820,14 @@ app.get("/books", async (request, response) => {
     ];
   }
   if (typeof major === "string" && major.trim() && major !== "All") {
-    where.major = { equals: major.trim(), mode: "insensitive" };
+    where.AND = [
+      {
+        OR: [
+          { major: { equals: major.trim(), mode: "insensitive" } },
+          { major: { equals: ALL_MAJORS_VALUE, mode: "insensitive" } },
+        ],
+      },
+    ];
   }
   if (typeof year === "string" && year.trim() && year !== "All") {
     where.year = { equals: year.trim(), mode: "insensitive" };
@@ -881,6 +856,17 @@ app.post("/books", requireSession, async (request: AuthenticatedRequest, respons
       400,
       parsed.error.issues[0]?.message ?? "စာအုပ်အချက်အလက်များကို မှန်ကန်စွာ ဖြည့်ပါ။",
     );
+  }
+  const courseRuleError = validateCommonCourseListing(
+    parsed.data.title,
+    parsed.data.major,
+    parsed.data.year,
+  );
+  if (courseRuleError === "major") {
+    throw new HttpError(400, "ဤဘာသာရပ်ကို မေဂျာအားလုံး သင်ယူရသောကြောင့် “မေဂျာအားလုံး” ကို ရွေးပါ။");
+  }
+  if (courseRuleError === "year") {
+    throw new HttpError(400, "ဤဘာသာရပ်အတွက် သတ်မှတ်ထားသော သင်တန်းနှစ်ကို ရွေးပါ။");
   }
 
   const book = await prisma.book.create({

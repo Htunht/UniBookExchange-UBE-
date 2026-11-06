@@ -21,6 +21,11 @@ import {
   getMajorLabel,
   getYearLabel,
 } from "../utils/labels";
+import {
+  ALL_MAJORS_VALUE,
+  getAllowedBookYears,
+  getCourseYearRule,
+} from "../utils/courseRules";
 
 interface AddBookModalProps {
   visible: boolean;
@@ -29,7 +34,6 @@ interface AddBookModalProps {
 }
 
 const MAJORS = ["CEIT", "EC", "EP", "Civil", "Archi", "ME", "MC"];
-const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "Final Year"];
 const CONDITIONS = ["Brand New", "Like New", "Good", "Used"];
 
 export default function AddBookModal({
@@ -47,6 +51,20 @@ export default function AddBookModal({
   const [condition, setCondition] = useState("Good");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const courseYearRule = getCourseYearRule(title);
+  const availableYears = getAllowedBookYears(courseYearRule);
+
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    const rule = getCourseYearRule(value);
+    if (!rule) return;
+
+    setMajor(ALL_MAJORS_VALUE);
+    const allowedYears = getAllowedBookYears(rule);
+    if (!allowedYears.includes(year)) {
+      setYear(allowedYears[allowedYears.length - 1]);
+    }
+  };
 
   const resetForm = () => {
     setTitle("");
@@ -133,7 +151,7 @@ export default function AddBookModal({
               placeholder="စာအုပ်အမည် ရိုက်ထည့်ပါ"
               placeholderTextColor="#94A3B8"
               value={title}
-              onChangeText={setTitle}
+              onChangeText={handleTitleChange}
             />
 
             {/* Major */}
@@ -143,23 +161,31 @@ export default function AddBookModal({
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.chipRow}
             >
-              {MAJORS.map((m) => (
-                <TouchableOpacity
-                  key={m}
-                  style={[styles.chip, major === m && styles.chipActive]}
-                  onPress={() => setMajor(m)}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      major === m && styles.chipTextActive,
-                    ]}
+              {[ALL_MAJORS_VALUE, ...MAJORS]
+                .filter((m) => !courseYearRule || m === ALL_MAJORS_VALUE)
+                .map((m) => (
+                  <TouchableOpacity
+                    key={m}
+                    style={[styles.chip, major === m && styles.chipActive]}
+                    onPress={() => setMajor(m)}
                   >
-                    {getMajorLabel(m)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[
+                        styles.chipText,
+                        major === m && styles.chipTextActive,
+                      ]}
+                    >
+                      {getMajorLabel(m)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
             </ScrollView>
+            {courseYearRule && (
+              <Text style={styles.ruleHint}>
+                ဒီဘာသာရပ်ကို မေဂျာအားလုံး သင်ယူရသောကြောင့် မေဂျာအားလုံးကို
+                အလိုအလျောက် ရွေးထားပါသည်။
+              </Text>
+            )}
 
             {/* Year */}
             <Text style={styles.label}>သင်တန်းနှစ်</Text>
@@ -168,7 +194,7 @@ export default function AddBookModal({
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.chipRow}
             >
-              {YEARS.map((y) => (
+              {availableYears.map((y) => (
                 <TouchableOpacity
                   key={y}
                   style={[styles.chip, year === y && styles.chipActive]}
@@ -351,6 +377,11 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: "#ffffff",
+  },
+  ruleHint: {
+    color: "#64748B",
+    fontSize: 12,
+    marginTop: 2,
   },
   priceHeader: {
     flexDirection: "row",

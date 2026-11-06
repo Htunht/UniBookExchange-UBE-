@@ -13,7 +13,6 @@ import { SymbolView } from "expo-symbols";
 import DashboardView from "../components/DashboardView";
 import ForgotPasswordFlow from "../components/ForgotPasswordFlow";
 import LoginForm from "../components/LoginForm";
-import RegisterOtpScreen from "../components/RegisterOtpScreen";
 import RegisterWizard from "../components/RegisterWizard";
 import {
   RegisterInput,
@@ -22,20 +21,15 @@ import {
   registerUser,
   requestPasswordReset,
   resetPassword,
-  resendRegistrationOtp,
   verifyPasswordResetOtp,
-  verifyRegistrationOtp,
 } from "../services/api";
 
-type AuthMode = "LOGIN" | "REGISTER" | "REGISTER_OTP" | "FORGOT_PASSWORD";
+type AuthMode = "LOGIN" | "REGISTER" | "FORGOT_PASSWORD";
 
 export default function AuthScreen() {
   const [authMode, setAuthMode] = useState<AuthMode>("LOGIN");
   const [sessionToken, setSessionToken] = useState("");
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-
-  // Store register email temporarily for OTP screen
-  const [pendingEmail, setPendingEmail] = useState("");
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // LOGIN
@@ -47,28 +41,12 @@ export default function AuthScreen() {
   };
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // REGISTER (Send OTP)
+  // REGISTER
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const handleRegister = async (data: RegisterInput) => {
-    await registerUser(data);
-    setPendingEmail(data.email);
-    setAuthMode("REGISTER_OTP");
-  };
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // VERIFY REGISTRATION OTP → go to Dashboard
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  const handleVerifyOtp = async (otp: string) => {
-    const result = await verifyRegistrationOtp(pendingEmail, otp);
+    const result = await registerUser(data);
     setSessionToken(result.sessionToken);
     setUserProfile(result.user);
-  };
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // RESEND OTP
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  const handleResendOtp = async () => {
-    await resendRegistrationOtp(pendingEmail);
   };
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -77,7 +55,6 @@ export default function AuthScreen() {
   const handleSignOut = () => {
     setSessionToken("");
     setUserProfile(null);
-    setPendingEmail("");
     setAuthMode("LOGIN");
   };
 
@@ -134,15 +111,6 @@ export default function AuthScreen() {
             <RegisterWizard
               onComplete={handleRegister}
               onGoToLogin={() => setAuthMode("LOGIN")}
-            />
-          )}
-
-          {authMode === "REGISTER_OTP" && (
-            <RegisterOtpScreen
-              email={pendingEmail}
-              onVerify={handleVerifyOtp}
-              onResendOtp={handleResendOtp}
-              onBack={() => setAuthMode("REGISTER")}
             />
           )}
 

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { Book } from "../services/api";
 import { sortBooks } from "./bookSorting";
+import {
+  ALL_MAJORS_VALUE,
+  getAllowedBookYears,
+  getCourseYearRule,
+} from "./courseRules";
 
 const makeBook = (id: string, price: number, createdAt: string): Book => ({
   id,
@@ -30,6 +35,42 @@ describe("sortBooks", () => {
       "cheapest",
       "older",
     ]);
+  });
+
+  describe("course rules", () => {
+    it("recognizes first-year common subjects in English and Burmese", () => {
+      for (const title of [
+        "Myanmar textbook",
+        "Physics",
+        "Chemistry",
+        "Drawing",
+        "မြန်မာစာ",
+        "ရူပဗေဒ",
+        "ဓာတုဗေဒ",
+        "ပုံဆွဲ",
+      ]) {
+        expect(getCourseYearRule(title)).toBe("first-year-only");
+      }
+      expect(getAllowedBookYears("first-year-only")).toEqual(["1st Year"]);
+    });
+
+    it("allows English and Math books through fourth year", () => {
+      for (const title of ["English", "Mathematics", "Math", "အင်္ဂလိပ်စာ", "သင်္ချာ"]) {
+        expect(getCourseYearRule(title)).toBe("through-fourth-year");
+      }
+      expect(getAllowedBookYears("through-fourth-year")).toEqual([
+        "1st Year",
+        "2nd Year",
+        "3rd Year",
+        "4th Year",
+      ]);
+    });
+
+    it("does not apply common-course rules to other titles", () => {
+      expect(getCourseYearRule("Civil Engineering Handbook")).toBeNull();
+      expect(getAllowedBookYears(null)).toHaveLength(6);
+      expect(ALL_MAJORS_VALUE).toBe("All Majors");
+    });
   });
 
   it("sorts by price and uses newest listings to break ties", () => {
