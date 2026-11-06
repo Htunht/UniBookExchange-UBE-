@@ -1,5 +1,5 @@
 import { SymbolView } from "expo-symbols";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -19,10 +19,13 @@ import {
   getMyBooks,
   getMyProfile,
   getMyRequestedAppointments,
+  registerPushToken,
   rejectAppointment,
   requestAppointment,
+  unregisterPushToken,
   updateBookStatus,
 } from "../services/api";
+import { registerDeviceForPush } from "../services/pushNotifications";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { sortBooks, type BookSort } from "../utils/bookSorting";
 import AddBookModal from "./AddBookModal";
@@ -79,6 +82,36 @@ export default function DashboardView({
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [appointmentsModalVisible, setAppointmentsModalVisible] =
     useState(false);
+  const pushTokenRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const token = await registerDeviceForPush();
+        if (!active || !token) return;
+        pushTokenRef.current = token;
+        await registerPushToken(sessionToken, token);
+      } catch (error) {
+        console.error("Push registration failed:", error);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [sessionToken]);
+
+  const handleSignOut = () => {
+    const token = pushTokenRef.current;
+    if (token) {
+      void unregisterPushToken(sessionToken, token).catch((error) => {
+        console.error("Push token removal failed:", error);
+      });
+    }
+    onSignOut();
+  };
 
   // Fetch books from server
   const fetchBooks = useCallback(async () => {
@@ -264,7 +297,7 @@ export default function DashboardView({
           onSelectTab={setActiveTab}
           pendingAppointmentsCount={pendingIncomingCount}
           onOpenAppointments={() => setAppointmentsModalVisible(true)}
-          onSignOut={onSignOut}
+          onSignOut={handleSignOut}
         />
 
         {/* Book Detail Modal */}
@@ -308,7 +341,7 @@ export default function DashboardView({
             setProfileModalVisible(false);
             setSelectedBook(book);
           }}
-          onSignOut={onSignOut}
+          onSignOut={handleSignOut}
           onRefresh={fetchUserData}
         />
       </View>

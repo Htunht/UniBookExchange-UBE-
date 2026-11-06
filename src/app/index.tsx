@@ -1,5 +1,5 @@
 // src/app/index.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -15,14 +15,17 @@ import ForgotPasswordFlow from "../components/ForgotPasswordFlow";
 import LoginForm from "../components/LoginForm";
 import RegisterWizard from "../components/RegisterWizard";
 import {
+  ApiError,
   RegisterInput,
   UserProfile,
+  getMyProfile,
   loginUser,
   registerUser,
   requestPasswordReset,
   resetPassword,
   verifyPasswordResetOtp,
 } from "../services/api";
+import { clearSession, loadSession, saveSession } from "../services/sessionStorage";
 
 type AuthMode = "LOGIN" | "REGISTER" | "FORGOT_PASSWORD";
 
@@ -30,12 +33,51 @@ export default function AuthScreen() {
   const [authMode, setAuthMode] = useState<AuthMode>("LOGIN");
   const [sessionToken, setSessionToken] = useState("");
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [restoringSession, setRestoringSession] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const stored = await loadSession();
+        if (!stored) return;
+
+        try {
+          const { user } = await getMyProfile(stored.token);
+          if (!active) return;
+          setSessionToken(stored.token);
+          setUserProfile(user);
+          await saveSession(stored.token, user);
+        } catch (error) {
+          const expired =
+            error instanceof ApiError &&
+            (error.status === 401 || error.status === 403);
+          if (expired) {
+            await clearSession();
+            return;
+          }
+
+          if (!active) return;
+          setSessionToken(stored.token);
+          setUserProfile(stored.user);
+        }
+      } finally {
+        if (active) setRestoringSession(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // LOGIN
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const handleLogin = async (email: string, password: string) => {
     const result = await loginUser(email, password);
+    await saveSession(result.sessionToken, result.user);
     setSessionToken(result.sessionToken);
     setUserProfile(result.user);
   };
@@ -45,6 +87,7 @@ export default function AuthScreen() {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const handleRegister = async (data: RegisterInput) => {
     const result = await registerUser(data);
+    await saveSession(result.sessionToken, result.user);
     setSessionToken(result.sessionToken);
     setUserProfile(result.user);
   };
@@ -53,6 +96,7 @@ export default function AuthScreen() {
   // SIGN OUT
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const handleSignOut = () => {
+    void clearSession();
     setSessionToken("");
     setUserProfile(null);
     setAuthMode("LOGIN");
@@ -61,6 +105,10 @@ export default function AuthScreen() {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // DASHBOARD (Logged in)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (restoringSession) {
+    return <View style={styles.safeArea} />;
+  }
+
   if (sessionToken && userProfile) {
     return (
       <DashboardView

@@ -1,14 +1,29 @@
 import { createHmac, randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
 import cors from "cors";
 import express, { type NextFunction, type Request, type Response } from "express";
-import rateLimit from "express-rate-limit";
-import helmet from "helmet";
+import rateLimitModule from "express-rate-limit";
+import helmetModule from "helmet";
+
+function unwrapDefault<T>(
+  imported: T,
+): T extends (...args: never[]) => unknown
+  ? T
+  : T extends { default: infer Exported }
+    ? Exported
+    : T {
+  if (typeof imported === "function") return imported as never;
+  return (imported as { default: never }).default;
+}
+
+const helmet = unwrapDefault(helmetModule);
+const rateLimit = unwrapDefault(rateLimitModule);
 import { Resend } from "resend";
 import { z } from "zod";
 import { prisma } from "./prisma.js";
 import { canRequestBook } from "./book-status.js";
 import { shouldLogDevelopmentOtp } from "./dev-otp.js";
 import { ALL_MAJORS_VALUE, validateCommonCourseListing } from "./course-rules.js";
+import { notifyUser } from "./push.js";
 
 const requiredEnvironment = [
   "DATABASE_URL",
@@ -776,6 +791,39 @@ app.post(
   },
 );
 
+const pushTokenSchema = z.object({
+  token: z
+    .string()
+    .trim()
+    .regex(/^(ExponentPushToken|ExpoPushToken)\[[^\]]+\]$/, "Push token မမှန်ပါ။"),
+});
+
+app.post("/push-tokens", requireSession, async (request: AuthenticatedRequest, response) => {
+  const parsed = pushTokenSchema.safeParse(request.body);
+  if (!parsed.success) {
+    throw new HttpError(400, "Push token မမှန်ပါ။");
+  }
+
+  await prisma.pushToken.upsert({
+    where: { token: parsed.data.token },
+    update: { userId: request.userId! },
+    create: { token: parsed.data.token, userId: request.userId! },
+  });
+  response.json({ message: "အကြောင်းကြားချက်ကို ဖွင့်ပြီးပါပြီ။" });
+});
+
+app.delete("/push-tokens", requireSession, async (request: AuthenticatedRequest, response) => {
+  const parsed = pushTokenSchema.safeParse(request.body);
+  if (!parsed.success) {
+    throw new HttpError(400, "Push token မမှန်ပါ။");
+  }
+
+  await prisma.pushToken.deleteMany({
+    where: { token: parsed.data.token, userId: request.userId },
+  });
+  response.json({ message: "အကြောင်းကြားချက်ကို ပိတ်ပြီးပါပြီ။" });
+});
+
 app.get("/me", requireSession, async (request: AuthenticatedRequest, response) => {
   const user = await prisma.user.findUnique({
     where: { id: request.userId },
@@ -1013,6 +1061,13 @@ app.post("/appointments", requireSession, async (request: AuthenticatedRequest, 
   });
 
   response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှု ပို့ပြီးပါပြီ။", appointment });
+
+  const buyerName = appointment.buyer.name || "ကျောင်းသား";
+  await notifyUser(book.sellerId, {
+    title: "ဝယ်ယူရန် တောင်းဆိုမှု",
+    body: `${buyerName} က "${appointment.book.title}" ကို ဝယ်ချင်ပါသည်။`,
+    data: { appointmentId: appointment.id },
+  });
 });
 
 app.get("/appointments/incoming", requireSession, async (request: AuthenticatedRequest, response) => {
@@ -1117,6 +1172,12 @@ app.patch("/appointments/:id/accept", requireSession, async (request: Authentica
   });
 
   response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှုကို လက်ခံလိုက်ပါပြီ။", appointment: updated });
+
+  await notifyUser(updated.buyerId, {
+    title: "တောင်းဆိုမှု လက်ခံပြီးပါပြီ",
+    body: `"${updated.book.title}" အတွက် တောင်းဆိုမှုကို လက်ခံပါပြီ။`,
+    data: { appointmentId: updated.id },
+  });
 });
 
 app.patch("/appointments/:id/reject", requireSession, async (request: AuthenticatedRequest, response) => {
@@ -1134,9 +1195,16 @@ app.patch("/appointments/:id/reject", requireSession, async (request: Authentica
   const updated = await prisma.appointment.update({
     where: { id },
     data: { status: "REJECTED" },
+    include: { book: { select: { title: true } } },
   });
 
   response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှုကို ငြင်းပယ်လိုက်ပါပြီ။", appointment: updated });
+
+  await notifyUser(updated.buyerId, {
+    title: "တောင်းဆိုမှု ငြင်းပယ်ခံရပါသည်",
+    body: `"${updated.book.title}" အတွက် တောင်းဆိုမှုကို ငြင်းပယ်ပါသည်။`,
+    data: { appointmentId: updated.id },
+  });
 });
 
 app.use(

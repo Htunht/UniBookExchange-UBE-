@@ -31,6 +31,7 @@ model User {
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   sessions           Session[]
+  pushTokens         PushToken[]
   books              Book[]
   buyerAppointments  Appointment[] @relation("BuyerAppointments")
   sellerAppointments Appointment[] @relation("SellerAppointments")
@@ -93,6 +94,17 @@ model PasswordResetOtp {
   lastSentAt          DateTime
   resetTokenHash      String?
   resetTokenExpiresAt DateTime?
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Session {

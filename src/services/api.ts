@@ -211,6 +211,20 @@ export function saveProfile(
   return request("/profile", { method: "POST", body: profile, sessionToken });
 }
 
+export function registerPushToken(
+  sessionToken: string,
+  token: string,
+): Promise<{ message: string }> {
+  return request("/push-tokens", { method: "POST", body: { token }, sessionToken });
+}
+
+export function unregisterPushToken(
+  sessionToken: string,
+  token: string,
+): Promise<{ message: string }> {
+  return request("/push-tokens", { method: "DELETE", body: { token }, sessionToken });
+}
+
 export function getMyProfile(sessionToken: string): Promise<{ user: UserProfile }> {
   return request("/me", { method: "GET", sessionToken });
 }
