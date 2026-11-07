@@ -1,6 +1,7 @@
 import { SymbolView } from "expo-symbols";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  AppState,
   FlatList,
   StyleSheet,
   TouchableOpacity,
@@ -25,7 +26,14 @@ import {
   unregisterPushToken,
   updateBookStatus,
 } from "../services/api";
-import { registerDeviceForPush } from "../services/pushNotifications";
+import {
+  notifyAppointmentAccepted,
+  registerDeviceForPush,
+} from "../services/pushNotifications";
+import {
+  loadSeenNotificationIds,
+  saveSeenNotificationIds,
+} from "../services/seenNotifications";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { sortBooks, type BookSort } from "../utils/bookSorting";
 import AddBookModal from "./AddBookModal";
@@ -75,6 +83,33 @@ export default function DashboardView({
   >([]);
   const [myRequests, setMyRequests] = useState<Appointment[]>([]);
 
+  const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>([]);
+  const [seenReady, setSeenReady] = useState(false);
+  const pushTokenRef = useRef<string | null>(null);
+  const appointmentStatusRef = useRef<Map<string, Appointment["status"]> | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const previous = appointmentStatusRef.current;
+    appointmentStatusRef.current = new Map(
+      myRequests.map((appointment) => [appointment.id, appointment.status]),
+    );
+    if (!previous) return;
+
+    for (const appointment of myRequests) {
+      const priorStatus = previous.get(appointment.id);
+      if (
+        appointment.status === "ACCEPTED" &&
+        !seenNotificationIds.includes(appointment.id) &&
+        priorStatus &&
+        priorStatus !== "ACCEPTED"
+      ) {
+        void notifyAppointmentAccepted(appointment.book.title);
+      }
+    }
+  }, [myRequests, seenNotificationIds]);
+
   // Modals state
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -82,7 +117,6 @@ export default function DashboardView({
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [appointmentsModalVisible, setAppointmentsModalVisible] =
     useState(false);
-  const pushTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -102,6 +136,26 @@ export default function DashboardView({
       active = false;
     };
   }, [sessionToken]);
+
+  useEffect(() => {
+    const userId = userProfile?.id;
+    if (!userId) return;
+    let active = true;
+
+    loadSeenNotificationIds(userId)
+      .then((ids) => {
+        if (!active) return;
+        setSeenNotificationIds((current) => Array.from(new Set([...ids, ...current])));
+        setSeenReady(true);
+      })
+      .catch(() => {
+        if (active) setSeenReady(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [userProfile?.id]);
 
   const handleSignOut = () => {
     const token = pushTokenRef.current;
@@ -170,6 +224,24 @@ export default function DashboardView({
     fetchAppointments();
   }, [fetchAppointments]);
 
+  useEffect(() => {
+    const refresh = () => {
+      void fetchBooks();
+      void fetchUserData();
+      void fetchAppointments();
+    };
+    const interval = setInterval(() => {
+      if (AppState.currentState === "active") refresh();
+    }, 10000);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") refresh();
+    });
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, [fetchAppointments, fetchBooks, fetchUserData]);
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchBooks();
@@ -236,23 +308,91 @@ export default function DashboardView({
     ? myRequests.find((a) => a.bookId === selectedBook.id)
     : null;
 
-  const pendingIncomingCount = incomingAppointments.filter(
-    (a) => a.status === "PENDING",
-  ).length;
+  const unseenIncomingCount = seenReady
+    ? incomingAppointments.filter(
+        (a) => a.status === "PENDING" && !seenNotificationIds.includes(a.id),
+      ).length
+    : 0;
+
+  const unseenAcceptedCount = seenReady
+    ? myRequests.filter(
+        (appointment) =>
+          appointment.status === "ACCEPTED" &&
+          !seenNotificationIds.includes(appointment.id),
+      ).length
+    : 0;
+
+  const markAllNotificationsSeen = useCallback(() => {
+    const userId = userProfile?.id;
+    if (!userId) return;
+    setSeenNotificationIds((current) => {
+      const incomingIds = incomingAppointments.map((a) => a.id);
+      const acceptedIds = myRequests
+        .filter(
+          (appointment) =>
+            appointment.status === "ACCEPTED" ||
+            appointment.status === "REJECTED",
+        )
+        .map((appointment) => appointment.id);
+      const next = Array.from(
+        new Set([...current, ...incomingIds, ...acceptedIds]),
+      );
+      void saveSeenNotificationIds(userId, next);
+      return next;
+    });
+  }, [incomingAppointments, myRequests, userProfile?.id]);
+
+  const booksFromRequests = useCallback(
+    (status: Appointment["status"]) => {
+      return myRequests
+        .filter((appointment) => appointment.status === status)
+        .map((appointment) => {
+          const listed = books.find((book) => book.id === appointment.bookId);
+          if (listed) return listed;
+          return {
+            id: appointment.book.id,
+            title: appointment.book.title,
+            author: null,
+            major: appointment.book.major,
+            year: appointment.book.year,
+            price: appointment.book.price,
+            condition: "",
+            status: status === "ACCEPTED" ? "SOLD" : "AVAILABLE",
+            description: null,
+            imageUrl: null,
+            sellerId: appointment.seller?.id ?? "",
+            createdAt: appointment.createdAt,
+            seller: appointment.seller,
+          } satisfies Book;
+        });
+    },
+    [books, myRequests],
+  );
 
   const displayedBooks = useMemo(() => {
-    return sortBooks(activeTab === "my-books" ? myBooks : books, bookSort);
-  }, [activeTab, bookSort, books, myBooks]);
+    const source =
+      activeTab === "my-books"
+        ? myBooks
+        : activeTab === "purchased"
+          ? booksFromRequests("ACCEPTED")
+          : activeTab === "appointments"
+            ? booksFromRequests("PENDING")
+            : books;
+    return sortBooks(source, bookSort);
+  }, [activeTab, bookSort, books, booksFromRequests, myBooks]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <DashboardHeader
           activeTab={activeTab}
-          pendingAppointmentsCount={pendingIncomingCount}
+          pendingAppointmentsCount={unseenIncomingCount + unseenAcceptedCount}
           userProfile={userProfile}
           onOpenDrawer={() => setDrawerVisible(true)}
-          onOpenAppointments={() => setAppointmentsModalVisible(true)}
+          onOpenAppointments={() => {
+            setAppointmentsModalVisible(true);
+            markAllNotificationsSeen();
+          }}
           onOpenProfile={() => setProfileModalVisible(true)}
         />
 
@@ -295,8 +435,6 @@ export default function DashboardView({
           userProfile={userProfile}
           activeTab={activeTab}
           onSelectTab={setActiveTab}
-          pendingAppointmentsCount={pendingIncomingCount}
-          onOpenAppointments={() => setAppointmentsModalVisible(true)}
           onSignOut={handleSignOut}
         />
 
@@ -328,6 +466,8 @@ export default function DashboardView({
           onAccept={handleAcceptAppointment}
           onReject={handleRejectAppointment}
           onRefresh={fetchAppointments}
+          unseenAcceptedCount={unseenAcceptedCount}
+          onViewSentRequests={markAllNotificationsSeen}
         />
 
         {/* Profile Modal */}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SymbolView } from "expo-symbols";
 import {
   ActivityIndicator,
@@ -23,6 +23,8 @@ interface AppointmentsModalProps {
   onAccept: (id: string) => Promise<void>;
   onReject: (id: string) => Promise<void>;
   onRefresh: () => void;
+  unseenAcceptedCount: number;
+  onViewSentRequests?: () => void;
 }
 
 export default function AppointmentsModal({
@@ -33,6 +35,8 @@ export default function AppointmentsModal({
   onAccept,
   onReject,
   onRefresh,
+  unseenAcceptedCount,
+  onViewSentRequests,
 }: AppointmentsModalProps) {
   const showDialog = useAppDialog();
   const insets = useSafeAreaInsets();
@@ -42,6 +46,14 @@ export default function AppointmentsModal({
   const pendingIncomingCount = incomingAppointments.filter(
     (a) => a.status === "PENDING",
   ).length;
+
+  useEffect(() => {
+    if (!visible) return;
+    if (pendingIncomingCount === 0 && unseenAcceptedCount > 0) {
+      setActiveTab("requests");
+    }
+    onViewSentRequests?.();
+  }, [onViewSentRequests, pendingIncomingCount, unseenAcceptedCount, visible]);
 
   const handleAccept = async (apt: Appointment) => {
     showDialog(
@@ -159,7 +171,10 @@ export default function AppointmentsModal({
 
             <TouchableOpacity
               style={[styles.tab, activeTab === "requests" && styles.activeTab]}
-              onPress={() => setActiveTab("requests")}
+              onPress={() => {
+                setActiveTab("requests");
+                onViewSentRequests?.();
+              }}
             >
               <Text
                 style={[
@@ -167,7 +182,8 @@ export default function AppointmentsModal({
                   activeTab === "requests" && styles.activeTabText,
                 ]}
               >
-                ပို့ထားသည် ({myRequests.length})
+                ပို့ထားသည်
+                {unseenAcceptedCount > 0 && ` (${unseenAcceptedCount})`}
               </Text>
             </TouchableOpacity>
           </View>

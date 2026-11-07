@@ -88,23 +88,33 @@ export default function DashboardBookFeed({
             <Text style={styles.emptyTitle}>
               {activeTab === "my-books"
                 ? "တင်ထားသော စာအုပ် မရှိသေးပါ"
-                : "စာအုပ် မတွေ့ပါ"}
+                : activeTab === "purchased"
+                  ? "ဝယ်ပြီးသော စာအုပ် မရှိသေးပါ"
+                  : activeTab === "appointments"
+                    ? "Appointment လုပ်ထားသော စာအုပ် မရှိသေးပါ"
+                    : "စာအုပ် မတွေ့ပါ"}
             </Text>
             <Text style={styles.emptySubtitle}>
               {activeTab === "my-books"
                 ? "စာအုပ်တင်ပြီး အခြားကျောင်းသားများနှင့် မျှဝေပါ။"
-                : "ရှာဖွေထားသော စာအုပ် မတွေ့ပါ။ စာအုပ်အမည် ပြောင်းပြီး ထပ်ရှာကြည့်ပါ။"}
+                : activeTab === "purchased"
+                  ? "ရောင်းသူလက်ခံထားသော စာအုပ်များကို ဒီနေရာမှာ ပြပါမယ်။"
+                  : activeTab === "appointments"
+                    ? "ဝယ်ယူရန် တောင်းဆိုထားသော စာအုပ်များကို ဒီနေရာမှာ ပြပါမယ်။"
+                    : "ရှာဖွေထားသော စာအုပ် မတွေ့ပါ။ စာအုပ်အမည် ပြောင်းပြီး ထပ်ရှာကြည့်ပါ။"}
             </Text>
-            <TouchableOpacity style={styles.emptyPostBtn} onPress={onAddBook}>
-              <View style={styles.emptyPostBtnContent}>
-                <SymbolView
-                  name={{ ios: "plus", android: "add", web: "add" }}
-                  tintColor="#ffffff"
-                  size={17}
-                />
-                <Text style={styles.emptyPostBtnText}>စာအုပ်တင်ရန်</Text>
-              </View>
-            </TouchableOpacity>
+            {activeTab !== "purchased" && activeTab !== "appointments" && (
+              <TouchableOpacity style={styles.emptyPostBtn} onPress={onAddBook}>
+                <View style={styles.emptyPostBtnContent}>
+                  <SymbolView
+                    name={{ ios: "plus", android: "add", web: "add" }}
+                    tintColor="#ffffff"
+                    size={17}
+                  />
+                  <Text style={styles.emptyPostBtnText}>စာအုပ်တင်ရန်</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         }
       />

@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { UserProfile } from "../services/api";
@@ -37,19 +38,21 @@ export default function DashboardHeader({
 
         <View style={styles.brandContainer}>
           <View style={styles.appTitleRow}>
-            <SymbolView
-              name={{
-                ios: "books.vertical.fill",
-                android: "auto_stories",
-                web: "auto_stories",
-              }}
-              tintColor="#0284C7"
-              size={20}
+            <Image
+              source={require("../../assets/images/ube-logo.png")}
+              style={styles.brandLogo}
+              contentFit="contain"
             />
             <Text style={styles.appTitle}>UBE</Text>
           </View>
-          <Text style={styles.tabBadge}>
-            {activeTab === "shelf" ? "စာအုပ်စင်" : "မိမိစာအုပ်များ"}
+          <Text style={styles.tabBadge} numberOfLines={1}>
+            {activeTab === "shelf"
+              ? "စာအုပ်စင်"
+              : activeTab === "my-books"
+                ? "မိမိစာအုပ်များ"
+                : activeTab === "purchased"
+                  ? "မိမိဝယ်ပြီးစာအုပ်များ"
+                  : "Appointment လုပ်ထားသော စာအုပ်များ"}
           </Text>
         </View>
       </View>
@@ -137,6 +140,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
+  },
+  brandLogo: {
+    width: 26,
+    height: 26,
   },
   appTitle: {
     fontSize: 19,

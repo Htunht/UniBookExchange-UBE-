@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 
 type StartupSplashOverlayProps = {
   onReady?: () => void;
@@ -64,10 +65,15 @@ export function StartupSplashOverlay({ onReady }: StartupSplashOverlayProps) {
       style={[styles.overlay, { opacity }]}
     >
       <View style={styles.content}>
-        <View style={styles.logo}>
-          <Text style={styles.logoText}>UBE</Text>
+        <View style={styles.logoCard}>
+          <Image
+            source={require("../../assets/images/ube-logo.png")}
+            style={styles.logoImage}
+            contentFit="contain"
+          />
         </View>
         <Text style={styles.appName}>UniBookExchange</Text>
+        <Text style={styles.appTagline}>ကျောင်းသုံးစာအုပ် အရောင်းအဝယ်နှင့် လဲလှယ်ရာ</Text>
         <Text style={styles.processing}>Processing...</Text>
         <View
           accessibilityLabel={`Loading ${percentage}%`}
@@ -87,7 +93,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#208AEF',
+    backgroundColor: '#0284C7',
     elevation: 1000,
     zIndex: 1000,
   },
@@ -96,26 +102,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  logo: {
-    width: 104,
-    height: 104,
+  logoCard: {
+    width: 120,
+    height: 120,
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    marginBottom: 18,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  logoText: {
-    color: '#FFFFFF',
-    fontSize: 34,
-    fontWeight: '900',
-    letterSpacing: 2,
+  logoImage: {
+    width: 95,
+    height: 95,
   },
   appName: {
     color: '#FFFFFF',
-    fontSize: 21,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  appTagline: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 4,
   },
   processing: {
     color: 'rgba(255,255,255,0.9)',

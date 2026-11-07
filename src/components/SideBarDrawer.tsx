@@ -1,4 +1,5 @@
 import React from "react";
+import { Image } from "expo-image";
 import {
   Modal,
   ScrollView,
@@ -13,7 +14,7 @@ import { SymbolView } from "expo-symbols";
 import { UserProfile } from "../services/api";
 import { getYearLabel } from "../utils/labels";
 
-export type ActiveTab = "shelf" | "my-books";
+export type ActiveTab = "shelf" | "my-books" | "purchased" | "appointments";
 
 interface SideBarDrawerProps {
   visible: boolean;
@@ -21,8 +22,6 @@ interface SideBarDrawerProps {
   userProfile: UserProfile | null;
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
-  pendingAppointmentsCount: number;
-  onOpenAppointments: () => void;
   onSignOut: () => void;
 }
 
@@ -32,8 +31,6 @@ export default function SideBarDrawer({
   userProfile,
   activeTab,
   onSelectTab,
-  pendingAppointmentsCount,
-  onOpenAppointments,
   onSignOut,
 }: SideBarDrawerProps) {
   const insets = useSafeAreaInsets();
@@ -52,14 +49,18 @@ export default function SideBarDrawer({
               <View style={[styles.drawerHeader, { paddingTop: Math.max(insets.top, 20) }]}>
                 <View style={styles.brandRow}>
                   <View style={styles.brandTitleRow}>
-                    <SymbolView
-                      name={{ ios: "books.vertical.fill", android: "auto_stories", web: "auto_stories" }}
-                      tintColor="#0284C7"
-                      size={22}
-                    />
-                    <Text style={styles.brandTitle}>UBE</Text>
+                    <View style={styles.brandLogoBox}>
+                      <Image
+                        source={require("../../assets/images/ube-logo.png")}
+                        style={styles.brandLogo}
+                        contentFit="contain"
+                      />
+                    </View>
+                    <View style={styles.brandTextColumn}>
+                      <Text style={styles.brandTitle}>UBE</Text>
+                      <Text style={styles.brandSub}>UniBookExchange</Text>
+                    </View>
                   </View>
-                  <Text style={styles.brandSub}>UniBookExchange</Text>
                 </View>
 
                 <View style={styles.userCard}>
@@ -165,12 +166,43 @@ export default function SideBarDrawer({
                   </View>
                 </TouchableOpacity>
 
-                {/* 3. ဝယ်ယူရန် တောင်းဆိုမှုများ */}
                 <TouchableOpacity
-                  style={styles.menuItem}
+                  style={[
+                    styles.menuItem,
+                    activeTab === "purchased" && styles.menuItemActive,
+                  ]}
                   onPress={() => {
+                    onSelectTab("purchased");
                     onClose();
-                    onOpenAppointments();
+                  }}
+                >
+                  <SymbolView
+                    style={styles.menuIcon}
+                    name={{ ios: "bag.fill", android: "shopping_bag", web: "shopping_bag" }}
+                    tintColor="#475569"
+                    size={22}
+                  />
+                  <View style={styles.menuTextContainer}>
+                    <Text
+                      style={[
+                        styles.menuLabel,
+                        activeTab === "purchased" && styles.menuLabelActive,
+                      ]}
+                    >
+                      မိမိဝယ်ပြီးစာအုပ်များ
+                    </Text>
+                    <Text style={styles.menuDesc}>လက်ခံပြီးသား ဝယ်ယူမှုများ</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.menuItem,
+                    activeTab === "appointments" && styles.menuItemActive,
+                  ]}
+                  onPress={() => {
+                    onSelectTab("appointments");
+                    onClose();
                   }}
                 >
                   <SymbolView
@@ -180,16 +212,16 @@ export default function SideBarDrawer({
                     size={22}
                   />
                   <View style={styles.menuTextContainer}>
-                    <Text style={styles.menuLabel}>ဝယ်ယူရန် တောင်းဆိုမှုများ</Text>
-                    <Text style={styles.menuDesc}>ဝယ်သူနှင့် ရောင်းသူ၏ တောင်းဆိုမှုများ</Text>
+                    <Text
+                      style={[
+                        styles.menuLabel,
+                        activeTab === "appointments" && styles.menuLabelActive,
+                      ]}
+                    >
+                      Appointment လုပ်ထားသော စာအုပ်များ
+                    </Text>
+                    <Text style={styles.menuDesc}>စောင့်ဆိုင်းနေသော ချိန်းဆိုမှုများ</Text>
                   </View>
-                  {pendingAppointmentsCount > 0 && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>
-                        {pendingAppointmentsCount}
-                      </Text>
-                    </View>
-                  )}
                 </TouchableOpacity>
               </ScrollView>
 
@@ -243,18 +275,41 @@ const styles = StyleSheet.create({
   brandTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
+    gap: 10,
+  },
+  brandLogoBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#0284C7",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "rgba(2, 132, 199, 0.15)",
+  },
+  brandLogo: {
+    width: 32,
+    height: 32,
+  },
+  brandTextColumn: {
+    justifyContent: "center",
   },
   brandTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "900",
-    color: "#0F172A",
-    letterSpacing: -0.5,
+    color: "#0284C7",
+    letterSpacing: 0.5,
   },
   brandSub: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#475569",
-    fontWeight: "500",
+    fontWeight: "600",
+    marginTop: -1,
   },
   userCard: {
     flexDirection: "row",
