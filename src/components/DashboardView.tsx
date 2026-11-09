@@ -15,14 +15,17 @@ import {
   acceptAppointment,
   createBook,
   deleteBook,
+  editBook,
   getBooks,
   getIncomingAppointments,
   getMyBooks,
   getMyProfile,
   getMyRequestedAppointments,
+  NetworkUnavailableError,
   registerPushToken,
   rejectAppointment,
   requestAppointment,
+  saveProfile,
   unregisterPushToken,
   updateBookStatus,
 } from "../services/api";
@@ -44,6 +47,7 @@ import DashboardHeader from "./DashboardHeader";
 import BookDetailModal from "./BookDetailModal";
 import ProfileModal from "./ProfileModal";
 import SideBarDrawer, { ActiveTab } from "./SideBarDrawer";
+import { useAppDialog } from "./AppDialogProvider";
 
 interface DashboardViewProps {
   sessionToken: string;
@@ -56,12 +60,13 @@ export default function DashboardView({
   onSignOut,
   initialUserProfile,
 }: DashboardViewProps) {
+  const showDialog = useAppDialog();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [updatingBookStatusId, setUpdatingBookStatusId] = useState<string | null>(null);
 
-  // The shelf shows every book; "my-books" provides a separate view of owned listings.
+  // The shelf shows other users' books; "my-books" contains this user's listings.
   const [activeTab, setActiveTab] = useState<ActiveTab>("shelf");
 
   // Search & Filter state
@@ -86,6 +91,7 @@ export default function DashboardView({
   const [seenNotificationIds, setSeenNotificationIds] = useState<string[]>([]);
   const [seenReady, setSeenReady] = useState(false);
   const pushTokenRef = useRef<string | null>(null);
+  const networkDialogShownRef = useRef(false);
   const appointmentStatusRef = useRef<Map<string, Appointment["status"]> | null>(
     null,
   );
@@ -114,6 +120,7 @@ export default function DashboardView({
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [appointmentsModalVisible, setAppointmentsModalVisible] =
     useState(false);
@@ -176,13 +183,18 @@ export default function DashboardView({
         year: selectedYear === "All Years" ? undefined : selectedYear,
       });
       setBooks(res.books);
+      networkDialogShownRef.current = false;
     } catch (error) {
       console.error("Fetch books failed:", error);
+      if (error instanceof NetworkUnavailableError && !networkDialogShownRef.current) {
+        networkDialogShownRef.current = true;
+        showDialog("အင်တာနက် ချိတ်ဆက်မှု မရှိပါ", error.message);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [searchQuery, selectedMajor, selectedYear]);
+  }, [searchQuery, selectedMajor, selectedYear, showDialog]);
 
   // Fetch user profile and my books
   const fetchUserData = useCallback(async () => {
@@ -249,10 +261,31 @@ export default function DashboardView({
     fetchAppointments();
   };
 
-  const handleCreateBook = async (input: CreateBookInput) => {
-    await createBook(sessionToken, input);
+  const handleSaveBook = async (input: CreateBookInput) => {
+    if (editingBook) {
+      await editBook(sessionToken, editingBook.id, input);
+    } else {
+      await createBook(sessionToken, input);
+    }
     fetchBooks();
     fetchUserData();
+    setEditingBook(null);
+  };
+
+  const handleSaveProfile = async (profile: {
+    name: string;
+    email: string;
+    year: string;
+    phone: string;
+    telegram: string;
+  }) => {
+    const result = await saveProfile(sessionToken, profile);
+    setUserProfile(result.user);
+  };
+
+  const openAddBook = () => {
+    setEditingBook(null);
+    setAddModalVisible(true);
   };
 
   const handleDeleteBook = async (bookId: string) => {
@@ -369,6 +402,7 @@ export default function DashboardView({
     [books, myRequests],
   );
 
+  const currentUserId = userProfile?.id;
   const displayedBooks = useMemo(() => {
     const source =
       activeTab === "my-books"
@@ -377,9 +411,11 @@ export default function DashboardView({
           ? booksFromRequests("ACCEPTED")
           : activeTab === "appointments"
             ? booksFromRequests("PENDING")
-            : books;
+            : currentUserId
+              ? books.filter((book) => book.sellerId !== currentUserId)
+              : [];
     return sortBooks(source, bookSort);
-  }, [activeTab, bookSort, books, booksFromRequests, myBooks]);
+  }, [activeTab, bookSort, books, booksFromRequests, currentUserId, myBooks]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -425,7 +461,12 @@ export default function DashboardView({
           refreshing={refreshing}
           onRefresh={onRefresh}
           onOpenBook={setSelectedBook}
-          onAddBook={() => setAddModalVisible(true)}
+          onAddBook={openAddBook}
+          onEditBook={(book) => {
+            setEditingBook(book);
+            setAddModalVisible(true);
+          }}
+          onDeleteBook={handleDeleteBook}
         />
 
         {/* Side Bar Drawer */}
@@ -452,9 +493,14 @@ export default function DashboardView({
 
         {/* Add Book Modal */}
         <AddBookModal
+          key={editingBook?.id ?? "new-book"}
           visible={addModalVisible}
-          onClose={() => setAddModalVisible(false)}
-          onSubmit={handleCreateBook}
+          initialBook={editingBook}
+          onClose={() => {
+            setAddModalVisible(false);
+            setEditingBook(null);
+          }}
+          onSubmit={handleSaveBook}
         />
 
         {/* Appointments Modal */}
@@ -483,6 +529,7 @@ export default function DashboardView({
           }}
           onSignOut={handleSignOut}
           onRefresh={fetchUserData}
+          onSaveProfile={handleSaveProfile}
         />
       </View>
     </SafeAreaView>

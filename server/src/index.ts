@@ -741,6 +741,7 @@ app.post("/auth/verify-otp", async (request, response) => {
 
 const profileSchema = z.object({
   name: z.string().trim().min(1).max(100),
+  email: z.string().trim().email().max(254).transform((email) => email.toLowerCase()),
   year: z.string().trim().min(1).max(40),
   phone: z.string().trim().min(1).max(30),
   telegram: z.string().trim().min(1).max(32),
@@ -783,11 +784,29 @@ app.post(
       throw new HttpError(400, "ကိုယ်ရေးအချက်အလက်များကို မှန်ကန်စွာ ဖြည့်ပါ။");
     }
 
-    await prisma.user.update({
+    const existingUser = await prisma.user.findUnique({
+      where: { email: parsed.data.email },
+      select: { id: true },
+    });
+    if (existingUser && existingUser.id !== request.userId) {
+      throw new HttpError(409, "ဤအီးမေးလ်လိပ်စာကို အခြားအကောင့်က အသုံးပြုထားပါသည်။");
+    }
+
+    const user = await prisma.user.update({
       where: { id: request.userId },
       data: parsed.data,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        year: true,
+        major: true,
+        phone: true,
+        telegram: true,
+        createdAt: true,
+      },
     });
-    response.json({ message: "ကိုယ်ရေးအချက်အလက်များကို သိမ်းဆည်းပြီးပါပြီ။" });
+    response.json({ message: "ကိုယ်ရေးအချက်အလက်များကို သိမ်းဆည်းပြီးပါပြီ။", user });
   },
 );
 
@@ -951,6 +970,59 @@ app.get("/my-books", requireSession, async (request: AuthenticatedRequest, respo
     orderBy: { createdAt: "desc" },
   });
   response.json({ books });
+});
+
+app.patch("/books/:id", requireSession, async (request: AuthenticatedRequest, response) => {
+  const id = Array.isArray(request.params.id) ? request.params.id[0] : request.params.id;
+  if (!id) {
+    throw new HttpError(400, "စာအုပ် id မမှန်ပါ");
+  }
+
+  const parsed = createBookSchema.safeParse(request.body);
+  if (!parsed.success) {
+    throw new HttpError(
+      400,
+      parsed.error.issues[0]?.message ?? "စာအုပ်အချက်အလက်ကို မှန်ကန်စွာ ဖြည့်ပါ",
+    );
+  }
+
+  const existingBook = await prisma.book.findUnique({ where: { id } });
+  if (!existingBook) {
+    throw new HttpError(404, "စာအုပ်ကို ရှာမတွေ့ပါ");
+  }
+  if (existingBook.sellerId !== request.userId) {
+    throw new HttpError(403, "ဤစာအုပ်ကို ပြင်ဆင်ခွင့်မရှိပါ");
+  }
+
+  const courseRuleError = validateCommonCourseListing(
+    parsed.data.title,
+    parsed.data.major,
+    parsed.data.year,
+  );
+  if (courseRuleError) {
+    throw new HttpError(400, "ဘာသာရပ်နှင့် သင်တန်းနှစ်ကို မှန်ကန်စွာ ရွေးချယ်ပါ");
+  }
+
+  const book = await prisma.book.update({
+    where: { id },
+    data: {
+      title: parsed.data.title,
+      author: parsed.data.author,
+      major: parsed.data.major,
+      year: parsed.data.year,
+      price: parsed.data.price,
+      condition: parsed.data.condition,
+      description: parsed.data.description,
+      imageUrl: parsed.data.imageUrl || null,
+    },
+    include: {
+      seller: {
+        select: { id: true, name: true, year: true, phone: true, telegram: true },
+      },
+    },
+  });
+
+  response.json({ message: "စာအုပ်အချက်အလက်ကို ပြင်ဆင်ပြီးပါပြီ", book });
 });
 
 app.delete("/books/:id", requireSession, async (request: AuthenticatedRequest, response) => {

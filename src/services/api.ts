@@ -10,6 +10,13 @@ export class ApiError extends Error {
   }
 }
 
+export class NetworkUnavailableError extends Error {
+  constructor() {
+    super("အင်တာနက် ပိတ်ထားပါသဖြင့် ဝန်ဆောင်မှု မရနိုင်ပါ။ အင်တာနက် ပြန်ဖွင့်ပြီး ထပ်ကြိုးစားပါ။");
+    this.name = "NetworkUnavailableError";
+  }
+}
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -109,14 +116,19 @@ async function request<T>(
 
   const { method = "POST", body, sessionToken } = options;
 
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
-    },
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${apiBaseUrl}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+      },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
+  } catch {
+    throw new NetworkUnavailableError();
+  }
 
   let result: { error?: string } & Record<string, unknown>;
   try {
@@ -206,8 +218,14 @@ export function verifyOtp(
 
 export function saveProfile(
   sessionToken: string,
-  profile: { name: string; year: string; phone: string; telegram: string },
-): Promise<{ message: string }> {
+  profile: {
+    name: string;
+    email: string;
+    year: string;
+    phone: string;
+    telegram: string;
+  },
+): Promise<{ message: string; user: UserProfile }> {
   return request("/profile", { method: "POST", body: profile, sessionToken });
 }
 
@@ -249,6 +267,14 @@ export function createBook(
   book: CreateBookInput,
 ): Promise<{ message: string; book: Book }> {
   return request("/books", { method: "POST", body: book, sessionToken });
+}
+
+export function editBook(
+  sessionToken: string,
+  bookId: string,
+  book: CreateBookInput,
+): Promise<{ message: string; book: Book }> {
+  return request(`/books/${bookId}`, { method: "PATCH", body: book, sessionToken });
 }
 
 export function getMyBooks(sessionToken: string): Promise<{ books: Book[] }> {

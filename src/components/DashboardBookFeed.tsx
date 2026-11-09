@@ -11,6 +11,7 @@ import {
 import type { Book } from "../services/api";
 import type { ActiveTab } from "./SideBarDrawer";
 import BookCard from "./BookCard";
+import { useAppDialog } from "./AppDialogProvider";
 
 interface DashboardBookFeedProps {
   activeTab: ActiveTab;
@@ -21,6 +22,8 @@ interface DashboardBookFeedProps {
   onRefresh: () => void;
   onOpenBook: (book: Book) => void;
   onAddBook: () => void;
+  onEditBook: (book: Book) => void;
+  onDeleteBook: (bookId: string) => Promise<void>;
 }
 
 export default function DashboardBookFeed({
@@ -32,7 +35,35 @@ export default function DashboardBookFeed({
   onRefresh,
   onOpenBook,
   onAddBook,
+  onEditBook,
+  onDeleteBook,
 }: DashboardBookFeedProps) {
+  const showDialog = useAppDialog();
+
+  const confirmDelete = (book: Book) => {
+    showDialog(
+      "စာအုပ်ကို ဖျက်မလား?",
+      `"${book.title}" ကို ဖျက်ပါမည်။ ဆက်လုပ်မလား?`,
+      [
+        { text: "မဖျက်တော့ပါ", style: "cancel" },
+        {
+          text: "ဖျက်မည်",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await onDeleteBook(book.id);
+            } catch (error) {
+              showDialog(
+                "ဖျက်၍ မရပါ",
+                error instanceof Error ? error.message : "စာအုပ်ဖျက်၍ မရပါ။",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -56,6 +87,8 @@ export default function DashboardBookFeed({
             book={item}
             isOwnBook={item.sellerId === currentUserId}
             onPress={() => onOpenBook(item)}
+            onEdit={() => onEditBook(item)}
+            onDelete={() => confirmDelete(item)}
           />
         )}
         ListEmptyComponent={
@@ -119,7 +152,7 @@ export default function DashboardBookFeed({
         }
       />
 
-      {books.length > 0 && (
+      {books.length > 0 && (activeTab === "shelf" || activeTab === "my-books") && (
         <TouchableOpacity
           activeOpacity={0.85}
           style={styles.fab}
@@ -130,9 +163,8 @@ export default function DashboardBookFeed({
           <SymbolView
             name={{ ios: "plus", android: "add", web: "add" }}
             tintColor="#ffffff"
-            size={20}
+            size={24}
           />
-          <Text style={styles.fabText}>စာအုပ်တင်ရန်</Text>
         </TouchableOpacity>
       )}
     </>
@@ -239,22 +271,16 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 16,
     bottom: 16,
+    width: 52,
+    height: 52,
     backgroundColor: "#0284C7",
-    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 13,
-    borderRadius: 28,
+    justifyContent: "center",
+    borderRadius: 26,
     shadowColor: "#0284C7",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 6,
-    gap: 6,
-  },
-  fabText: {
-    color: "#ffffff",
-    fontSize: 15,
-    fontWeight: "800",
   },
 });

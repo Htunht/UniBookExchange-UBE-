@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppDialog } from "./AppDialogProvider";
-import { CreateBookInput } from "../services/api";
+import { Book, CreateBookInput } from "../services/api";
 import {
   getConditionLabel,
   getMajorLabel,
@@ -31,6 +31,7 @@ interface AddBookModalProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (book: CreateBookInput) => Promise<void>;
+  initialBook?: Book | null;
 }
 
 const MAJORS = ["CEIT", "EC", "EP", "Civil", "Archi", "ME", "MC"];
@@ -40,16 +41,17 @@ export default function AddBookModal({
   visible,
   onClose,
   onSubmit,
+  initialBook,
 }: AddBookModalProps) {
   const showDialog = useAppDialog();
   const insets = useSafeAreaInsets();
-  const [title, setTitle] = useState("");
-  const [major, setMajor] = useState("CEIT");
-  const [year, setYear] = useState("1st Year");
-  const [price, setPrice] = useState("");
-  const [isFree, setIsFree] = useState(false);
-  const [condition, setCondition] = useState("Good");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState(initialBook?.title ?? "");
+  const [major, setMajor] = useState(initialBook?.major ?? "CEIT");
+  const [year, setYear] = useState(initialBook?.year ?? "1st Year");
+  const [price, setPrice] = useState(initialBook ? String(initialBook.price) : "");
+  const [isFree, setIsFree] = useState(initialBook?.price === 0);
+  const [condition, setCondition] = useState(initialBook?.condition ?? "Good");
+  const [description, setDescription] = useState(initialBook?.description ?? "");
   const [loading, setLoading] = useState(false);
   const courseYearRule = getCourseYearRule(title);
   const availableYears = getAllowedBookYears(courseYearRule);
@@ -93,13 +95,18 @@ export default function AddBookModal({
         price: numericPrice,
         condition,
         description: description.trim() || undefined,
+        author: initialBook?.author ?? undefined,
+        imageUrl: initialBook?.imageUrl ?? undefined,
       });
       resetForm();
       onClose();
-      showDialog("ပြီးပါပြီ", "စာအုပ်ကို တင်ပြီးပါပြီ။");
+      showDialog(
+        "ပြီးပါပြီ",
+        initialBook ? "စာအုပ်အချက်အလက်ကို ပြင်ဆင်ပြီးပါပြီ။" : "စာအုပ်ကို တင်ပြီးပါပြီ။",
+      );
     } catch (error) {
       showDialog(
-        "စာအုပ်တင်၍ မရပါ",
+        initialBook ? "စာအုပ်ပြင်ဆင်၍ မရပါ" : "စာအုပ်တင်၍ မရပါ",
         error instanceof Error ? error.message : "စာအုပ်တင်၍ မရပါ။",
       );
     } finally {
@@ -129,7 +136,9 @@ export default function AddBookModal({
           ]}
         >
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>စာအုပ်တင်ရန်</Text>
+            <Text style={styles.headerTitle}>
+              {initialBook ? "စာအုပ်ပြင်ဆင်ရန်" : "စာအုပ်တင်ရန်"}
+            </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <SymbolView
                 name={{ ios: "xmark", android: "close", web: "close" }}
@@ -283,7 +292,9 @@ export default function AddBookModal({
               {loading ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text style={styles.submitBtnText}>စာအုပ်တင်ရန်</Text>
+                <Text style={styles.submitBtnText}>
+                  {initialBook ? "ပြင်ဆင်မှုသိမ်းမည်" : "စာအုပ်တင်ရန်"}
+                </Text>
               )}
             </TouchableOpacity>
           </ScrollView>

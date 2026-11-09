@@ -1,12 +1,6 @@
 import React from "react";
-import { SymbolView } from "expo-symbols";
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { Book } from "../services/api";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import type { Book } from "../services/api";
 import {
   getConditionLabel,
   getMajorLabel,
@@ -17,109 +11,96 @@ interface BookCardProps {
   book: Book;
   isOwnBook?: boolean;
   onPress: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
-
-const MAJOR_COLORS: Record<string, { bg: string; text: string }> = {
-  CEIT: { bg: "#E0F2FE", text: "#0284C7" },
-  EC: { bg: "#FEF3C7", text: "#D97706" },
-  EP: { bg: "#DCFCE7", text: "#16A34A" },
-  Civil: { bg: "#FEE2E2", text: "#DC2626" },
-  Mech: { bg: "#F3E8FF", text: "#9333EA" },
-  Mechanical: { bg: "#F3E8FF", text: "#9333EA" },
-  Arch: { bg: "#FFEDD5", text: "#EA580C" },
-  Architecture: { bg: "#FFEDD5", text: "#EA580C" },
-  Other: { bg: "#F1F5F9", text: "#475569" },
-};
 
 export default function BookCard({
   book,
   isOwnBook = false,
   onPress,
+  onEdit,
+  onDelete,
 }: BookCardProps) {
-  const majorColor =
-    MAJOR_COLORS[book.major] || { bg: "#E2E8F0", text: "#334155" };
-
   const isFree = !book.price || book.price === 0;
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      style={styles.card}
-      onPress={onPress}
-    >
-      <View style={styles.topRow}>
-        <View style={[styles.badge, { backgroundColor: majorColor.bg }]}>
-          <Text style={[styles.badgeText, { color: majorColor.text }]}>
-            {getMajorLabel(book.major)}
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <TouchableOpacity
+          activeOpacity={0.75}
+          style={styles.bookInfo}
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={`${book.title}, ${getMajorLabel(book.major)}, ${getYearLabel(book.year)}`}
+        >
+          <Text style={styles.title} numberOfLines={2}>
+            {book.title}
           </Text>
-        </View>
-        <View style={styles.yearBadge}>
-          <Text style={styles.yearText}>{getYearLabel(book.year)}</Text>
-        </View>
-        {book.status === "SOLD" && (
-          <View style={styles.soldBadge}>
-            <Text style={styles.soldBadgeText}>ရောင်းပြီး</Text>
-          </View>
-        )}
+        </TouchableOpacity>
         <View style={styles.conditionBadge}>
-          <Text style={styles.conditionText}>
+          <Text style={styles.conditionText} numberOfLines={1}>
             {getConditionLabel(book.condition)}
           </Text>
         </View>
       </View>
 
-      <Text style={styles.title} numberOfLines={2}>
-        {book.title}
-      </Text>
-
-      {Boolean(book.author) && (
-        <View style={styles.authorRow}>
-          <SymbolView
-            name={{ ios: "pencil", android: "edit", web: "edit" }}
-            tintColor="#64748B"
-            size={14}
-          />
-          <Text style={styles.author} numberOfLines={1}>{book.author}</Text>
-        </View>
-      )}
-
-      {Boolean(book.description) && (
-        <Text style={styles.description} numberOfLines={2}>
-          {book.description}
-        </Text>
-      )}
+      <TouchableOpacity
+        activeOpacity={0.75}
+        onPress={onPress}
+        accessibilityRole="button"
+      >
+        <Text style={styles.detailText}>{getMajorLabel(book.major)}</Text>
+        <Text style={styles.detailText}>{getYearLabel(book.year)}</Text>
+        {isFree ? (
+          <Text style={styles.freeText}>အခမဲ့</Text>
+        ) : (
+          <Text style={styles.priceText}>{book.price.toLocaleString()} ကျပ်</Text>
+        )}
+      </TouchableOpacity>
 
       <View style={styles.footer}>
-        <View style={styles.priceContainer}>
-          {isFree ? (
-            <View style={styles.freeBadge}>
-              <Text style={styles.freeText}>အခမဲ့</Text>
+        <View style={styles.statusSlot}>
+          {book.status === "SOLD" && (
+            <View style={styles.soldBadge}>
+              <Text style={styles.soldText}>ရောင်းပြီး</Text>
             </View>
-          ) : (
-            <Text style={styles.priceText}>
-              {book.price.toLocaleString()} ကျပ်
-            </Text>
           )}
         </View>
-
-        <View style={styles.sellerInfo}>
-          <View style={styles.sellerAvatar}>
-            <SymbolView
-              name={{ ios: "person.fill", android: "person", web: "person" }}
-              tintColor="#64748B"
-              size={15}
-            />
+        {isOwnBook ? (
+          <View style={styles.ownerActions}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.deleteButton}
+              onPress={onDelete}
+              accessibilityRole="button"
+              accessibilityLabel={`${book.title} ကို ဖျက်မည်`}
+            >
+              <Text style={styles.deleteButtonText}>ဖျက်မည်</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={styles.buyButton}
+              onPress={onEdit}
+              accessibilityRole="button"
+              accessibilityLabel={`${book.title} ကို ပြန်ပြင်မည်`}
+            >
+              <Text style={styles.buyButtonText}>ပြန်ပြင်မည်</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.sellerName} numberOfLines={1}>
-            {isOwnBook
-              ? "မိမိစာအုပ်"
-              : book.seller?.year
-              ? `${getYearLabel(book.seller.year)} ကျောင်းသား`
-              : "ကျောင်းသား"}
-          </Text>
-        </View>
+        ) : (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.buyButton}
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityLabel={`${book.title} ကို ဝယ်မည်`}
+          >
+            <Text style={styles.buyButtonText}>ဝယ်မည်</Text>
+          </TouchableOpacity>
+        )}
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -127,8 +108,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffffff",
     borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
+    padding: 12,
+    marginBottom: 9,
     borderWidth: 1,
     borderColor: "#E2E8F0",
     shadowColor: "#0F172A",
@@ -137,79 +118,51 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  topRow: {
+  header: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-    gap: 6,
+    alignItems: "flex-start",
+    gap: 10,
+    marginBottom: 7,
   },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  yearBadge: {
-    backgroundColor: "#F1F5F9",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  yearText: {
-    fontSize: 12,
-    color: "#475569",
-    fontWeight: "600",
-  },
-  conditionBadge: {
-    marginLeft: "auto",
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  soldBadge: {
-    backgroundColor: "#FEE2E2",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  soldBadgeText: {
-    color: "#B91C1C",
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  conditionText: {
-    fontSize: 11,
-    color: "#64748B",
-    fontWeight: "500",
+  bookInfo: {
+    flex: 1,
   },
   title: {
     fontSize: 17,
     fontWeight: "700",
     color: "#0F172A",
-    lineHeight: 22,
-    marginBottom: 4,
+    lineHeight: 23,
   },
-  author: {
+  conditionBadge: {
+    maxWidth: "42%",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  conditionText: {
+    fontSize: 11,
+    color: "#475569",
+    fontWeight: "600",
+  },
+  detailText: {
     fontSize: 13,
     color: "#64748B",
-    marginBottom: 6,
+    lineHeight: 20,
   },
-  authorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
+  priceText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#0284C7",
+    marginTop: 3,
   },
-  description: {
-    fontSize: 13,
-    color: "#475569",
-    lineHeight: 18,
-    marginBottom: 10,
+  freeText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#059669",
+    marginTop: 3,
   },
   footer: {
     flexDirection: "row",
@@ -217,46 +170,55 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
-    paddingTop: 10,
-    marginTop: 4,
+    paddingTop: 8,
+    marginTop: 9,
   },
-  priceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  statusSlot: {
+    flex: 1,
+    alignItems: "flex-start",
   },
-  priceText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#0284C7",
+  soldBadge: {
+    backgroundColor: "#FEE2E2",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 7,
   },
-  freeBadge: {
-    backgroundColor: "#ECFDF5",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  freeText: {
-    fontSize: 13,
+  soldText: {
+    color: "#B91C1C",
+    fontSize: 12,
     fontWeight: "700",
-    color: "#059669",
   },
-  sellerInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    maxWidth: "50%",
-  },
-  sellerAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#E2E8F0",
+  buyButton: {
+    minWidth: 92,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#0284C7",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 9,
   },
-  sellerName: {
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: "500",
+  buyButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  ownerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  deleteButton: {
+    minWidth: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FEF2F2",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 9,
+  },
+  deleteButtonText: {
+    color: "#B91C1C",
+    fontSize: 14,
+    fontWeight: "700",
   },
 });

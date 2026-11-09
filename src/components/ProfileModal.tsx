@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -23,6 +24,13 @@ interface ProfileModalProps {
   onOpenBook: (book: Book) => void;
   onSignOut: () => void;
   onRefresh: () => void;
+  onSaveProfile: (profile: {
+    name: string;
+    email: string;
+    year: string;
+    phone: string;
+    telegram: string;
+  }) => Promise<void>;
 }
 
 export default function ProfileModal({
@@ -34,10 +42,50 @@ export default function ProfileModal({
   onOpenBook,
   onSignOut,
   onRefresh,
+  onSaveProfile,
 }: ProfileModalProps) {
   const showDialog = useAppDialog();
   const insets = useSafeAreaInsets();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [profileYear, setProfileYear] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  const [profileTelegram, setProfileTelegram] = useState("");
+
+  const startProfileEdit = () => {
+    if (!userProfile) return;
+    setProfileName(userProfile.name ?? "");
+    setProfileEmail(userProfile.email);
+    setProfileYear(userProfile.year ?? "");
+    setProfilePhone(userProfile.phone ?? "");
+    setProfileTelegram(userProfile.telegram ?? "");
+    setEditingProfile(true);
+  };
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      await onSaveProfile({
+        name: profileName.trim(),
+        email: profileEmail.trim(),
+        year: profileYear.trim(),
+        phone: profilePhone.trim(),
+        telegram: profileTelegram.trim().replace(/^@/, ""),
+      });
+      setEditingProfile(false);
+      showDialog("ပြီးပါပြီ", "ကိုယ်ရေးအချက်အလက်ကို သိမ်းဆည်းပြီးပါပြီ။");
+    } catch (error) {
+      showDialog(
+        "သိမ်းဆည်း၍ မရပါ",
+        error instanceof Error ? error.message : "ကိုယ်ရေးအချက်အလက်ကို သိမ်း၍ မရပါ။",
+      );
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const confirmDelete = (book: Book) => {
     showDialog(
@@ -185,7 +233,89 @@ export default function ProfileModal({
                   </View>
                 </View>
               </View>
+
+              <TouchableOpacity
+                style={styles.editProfileButton}
+                onPress={startProfileEdit}
+                accessibilityRole="button"
+              >
+                <Text style={styles.editProfileButtonText}>ကိုယ်ရေးအချက်အလက် ပြင်ဆင်ရန်</Text>
+              </TouchableOpacity>
             </View>
+
+            {editingProfile && (
+              <View style={styles.profileEditor}>
+                <Text style={styles.editorTitle}>ကိုယ်ရေးအချက်အလက် ပြင်ဆင်ရန်</Text>
+                <Text style={styles.inputLabel}>Username / အမည်</Text>
+                <TextInput
+                  style={styles.profileInput}
+                  value={profileName}
+                  onChangeText={setProfileName}
+                  placeholder="အမည်"
+                  autoCapitalize="words"
+                  maxLength={100}
+                />
+                <Text style={styles.inputLabel}>Email</Text>
+                <TextInput
+                  style={styles.profileInput}
+                  value={profileEmail}
+                  onChangeText={setProfileEmail}
+                  placeholder="name@example.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  maxLength={254}
+                />
+                <Text style={styles.inputLabel}>သင်တန်းနှစ်</Text>
+                <TextInput
+                  style={styles.profileInput}
+                  value={profileYear}
+                  onChangeText={setProfileYear}
+                  placeholder="ဥပမာ - 1st Year"
+                  autoCapitalize="words"
+                  maxLength={40}
+                />
+                <Text style={styles.inputLabel}>ဖုန်းနံပါတ်</Text>
+                <TextInput
+                  style={styles.profileInput}
+                  value={profilePhone}
+                  onChangeText={setProfilePhone}
+                  placeholder="ဖုန်းနံပါတ်"
+                  keyboardType="phone-pad"
+                  maxLength={30}
+                />
+                <Text style={styles.inputLabel}>Telegram username</Text>
+                <TextInput
+                  style={styles.profileInput}
+                  value={profileTelegram}
+                  onChangeText={setProfileTelegram}
+                  placeholder="username"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  maxLength={32}
+                />
+                <View style={styles.editorActions}>
+                  <TouchableOpacity
+                    style={styles.cancelEditButton}
+                    onPress={() => setEditingProfile(false)}
+                    disabled={savingProfile}
+                  >
+                    <Text style={styles.cancelEditText}>မသိမ်းတော့ပါ</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.saveProfileButton, savingProfile && styles.disabledButton]}
+                    onPress={handleSaveProfile}
+                    disabled={savingProfile}
+                  >
+                    {savingProfile ? (
+                      <ActivityIndicator color="#ffffff" />
+                    ) : (
+                      <Text style={styles.saveProfileText}>သိမ်းမည်</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             {/* My Books Section */}
             <View style={styles.sectionHeader}>
@@ -321,6 +451,86 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 3,
     elevation: 2,
+  },
+  editProfileButton: {
+    marginTop: 10,
+    alignSelf: "stretch",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 9,
+    backgroundColor: "#E0F2FE",
+  },
+  editProfileButtonText: {
+    color: "#0369A1",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  profileEditor: {
+    padding: 14,
+    marginBottom: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#ffffff",
+  },
+  editorTitle: {
+    marginBottom: 4,
+    color: "#0F172A",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  inputLabel: {
+    marginTop: 10,
+    marginBottom: 5,
+    color: "#334155",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  profileInput: {
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 9,
+    color: "#0F172A",
+    backgroundColor: "#F8FAFC",
+    fontSize: 14,
+  },
+  editorActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 8,
+    marginTop: 16,
+  },
+  cancelEditButton: {
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 9,
+    backgroundColor: "#F1F5F9",
+  },
+  cancelEditText: {
+    color: "#475569",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  saveProfileButton: {
+    minWidth: 92,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 9,
+    backgroundColor: "#0284C7",
+  },
+  disabledButton: {
+    opacity: 0.65,
+  },
+  saveProfileText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "700",
   },
   avatar: {
     width: 68,

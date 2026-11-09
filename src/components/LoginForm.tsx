@@ -55,11 +55,6 @@ export default function LoginForm({
     <View style={styles.card}>
       <View style={styles.titleRow}>
         <Text style={styles.title}>မင်္ဂလာပါ</Text>
-        <SymbolView
-          name={{ ios: "hand.wave.fill", android: "waving_hand", web: "waving_hand" }}
-          tintColor="#0284C7"
-          size={21}
-        />
       </View>
       <Text style={styles.subtitle}>အကောင့်သို့ ဝင်ရောက်ပါ</Text>
 
