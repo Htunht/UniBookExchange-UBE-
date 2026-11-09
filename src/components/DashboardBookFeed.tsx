@@ -124,7 +124,7 @@ export default function DashboardBookFeed({
                 : activeTab === "purchased"
                   ? "ဝယ်ပြီးသော စာအုပ် မရှိသေးပါ"
                   : activeTab === "appointments"
-                    ? "Appointment လုပ်ထားသော စာအုပ် မရှိသေးပါ"
+                    ? "တောင်းဆိုမှု မရှိသေးပါ"
                     : "စာအုပ် မတွေ့ပါ"}
             </Text>
             <Text style={styles.emptySubtitle}>
@@ -133,7 +133,7 @@ export default function DashboardBookFeed({
                 : activeTab === "purchased"
                   ? "ရောင်းသူလက်ခံထားသော စာအုပ်များကို ဒီနေရာမှာ ပြပါမယ်။"
                   : activeTab === "appointments"
-                    ? "ဝယ်ယူရန် တောင်းဆိုထားသော စာအုပ်များကို ဒီနေရာမှာ ပြပါမယ်။"
+                    ? "ဝယ်ယူရန် တောင်းဆိုမှုများ ဒီမှာပေါ်ပါမယ်။"
                     : "ရှာဖွေထားသော စာအုပ် မတွေ့ပါ။ စာအုပ်အမည် ပြောင်းပြီး ထပ်ရှာကြည့်ပါ။"}
             </Text>
             {activeTab !== "purchased" && activeTab !== "appointments" && (

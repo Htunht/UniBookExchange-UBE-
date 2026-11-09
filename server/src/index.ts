@@ -1270,13 +1270,12 @@ app.patch("/appointments/:id/reject", requireSession, async (request: Authentica
     include: { book: { select: { title: true } } },
   });
 
-  response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှုကို ငြင်းပယ်လိုက်ပါပြီ။", appointment: updated });
-
   await notifyUser(updated.buyerId, {
     title: "တောင်းဆိုမှု ငြင်းပယ်ခံရပါသည်",
     body: `"${updated.book.title}" အတွက် တောင်းဆိုမှုကို ငြင်းပယ်ပါသည်။`,
     data: { appointmentId: updated.id },
   });
+  response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှုကို ငြင်းပယ်လိုက်ပါပြီ။", appointment: updated });
 });
 
 app.use(

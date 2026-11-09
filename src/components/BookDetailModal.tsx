@@ -256,7 +256,7 @@ export default function BookDetailModal({
 
             {/* Seller Info Card */}
             <View style={styles.sellerCard}>
-              <Text style={styles.sellerCardTitle}>ရောင်းသူ / တင်ထားသူ</Text>
+              <Text style={styles.sellerCardTitle}>ရောင်းသူ</Text>
               <View style={styles.sellerRow}>
                 <View style={styles.avatarBig}>
                   {avatarLetter ? (
@@ -372,7 +372,7 @@ export default function BookDetailModal({
                         style={[styles.actionBtn, styles.phoneBtn]}
                         onPress={handleCall}
                       >
-                        <Text style={styles.btnText}>ဖုန်းခေါ်ရန် ({sellerPhone})</Text>
+                        <Text style={styles.btnText}>Phone: {sellerPhone}</Text>
                       </TouchableOpacity>
                     )}
 
@@ -382,7 +382,7 @@ export default function BookDetailModal({
                         onPress={handleTelegram}
                       >
                         <Text style={styles.btnText}>
-                          Telegram သို့ ဆက်သွယ်ရန် (@{sellerTelegram?.replace(/^@/, "")})
+                          Telegram: @{sellerTelegram?.replace(/^@/, "")}
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -925,6 +925,7 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontWeight: "700",
     fontSize: 14,
+    textAlign: "center",
   },
   statusConfirmationBackdrop: {
     flex: 1,

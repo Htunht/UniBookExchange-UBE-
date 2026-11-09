@@ -218,9 +218,9 @@ export default function SideBarDrawer({
                         activeTab === "appointments" && styles.menuLabelActive,
                       ]}
                     >
-                      Appointment လုပ်ထားသော စာအုပ်များ
+                      တောင်းဆိုမှုများ
                     </Text>
-                    <Text style={styles.menuDesc}>စောင့်ဆိုင်းနေသော ချိန်းဆိုမှုများ</Text>
+                    <Text style={styles.menuDesc}>စာအုပ်ဝယ်ယူရန် ချိန်းဆိုမှုများ</Text>
                   </View>
                 </TouchableOpacity>
               </ScrollView>
@@ -315,9 +315,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.75)",
-    padding: 12,
-    borderRadius: 12,
+    padding: 0,
   },
   avatar: {
     width: 44,

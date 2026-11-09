@@ -52,7 +52,7 @@ export default function DashboardHeader({
                 ? "မိမိစာအုပ်များ"
                 : activeTab === "purchased"
                   ? "မိမိဝယ်ပြီးစာအုပ်များ"
-                  : "Appointment လုပ်ထားသော စာအုပ်များ"}
+                  : "တောင်းဆိုမှုများ"}
           </Text>
         </View>
       </View>

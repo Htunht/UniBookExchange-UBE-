@@ -10,6 +10,7 @@ type PushMessage = {
 
 type ExpoPushTicket = {
   status: "ok" | "error";
+  message?: string;
   details?: { error?: string };
 };
 
@@ -18,7 +19,10 @@ export async function notifyUser(userId: string, message: PushMessage): Promise<
     where: { userId },
     select: { token: true },
   });
-  if (registrations.length === 0) return;
+  if (registrations.length === 0) {
+    console.info("Push skipped: recipient has no registered devices.");
+    return;
+  }
 
   try {
     const response = await fetch(expoPushUrl, {
@@ -41,13 +45,34 @@ export async function notifyUser(userId: string, message: PushMessage): Promise<
     });
 
     if (!response.ok) {
-      console.error("Expo push request failed:", response.status);
+      console.error("Expo push request failed:", response.status, await response.text());
       return;
     }
 
-    const result = (await response.json()) as { data?: ExpoPushTicket[] };
+    const result = (await response.json()) as {
+      data?: ExpoPushTicket[] | ExpoPushTicket;
+      errors?: unknown;
+    };
+    const tickets = Array.isArray(result.data)
+      ? result.data
+      : result.data
+        ? [result.data]
+        : [];
+    const failed = tickets
+      .map((ticket, index) => ({ ticket, index }))
+      .filter(({ ticket }) => ticket.status === "error");
+    if (failed.length > 0 || result.errors) {
+      console.error("Expo rejected push notification:", {
+        errors: result.errors,
+        tickets: failed.map(({ ticket, index }) => ({
+          device: index + 1,
+          message: ticket.message,
+          error: ticket.details?.error,
+        })),
+      });
+    }
     const expired = registrations.filter((_, index) => {
-      const ticket = result.data?.[index];
+      const ticket = tickets[index];
       return ticket?.status === "error" && ticket.details?.error === "DeviceNotRegistered";
     });
     if (expired.length > 0) {
