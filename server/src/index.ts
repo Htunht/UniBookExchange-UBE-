@@ -1242,13 +1242,12 @@ app.patch("/appointments/:id/accept", requireSession, async (request: Authentica
     },
   });
 
-  response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှုကို လက်ခံလိုက်ပါပြီ။", appointment: updated });
-
   await notifyUser(updated.buyerId, {
-    title: "တောင်းဆိုမှု လက်ခံပြီးပါပြီ",
-    body: `"${updated.book.title}" အတွက် တောင်းဆိုမှုကို လက်ခံပါပြီ။`,
+    title: "ကမ်းလှမ်းချက်ကို လက်ခံလိုက်ပါပြီ 🎉",
+    body: `ရောင်းသူက သင့်ရဲ့ "${updated.book.title}" ကမ်းလှမ်းချက်ကို လက်ခံလိုက်ပါပြီ။`,
     data: { appointmentId: updated.id },
   });
+  response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှုကို လက်ခံလိုက်ပါပြီ။", appointment: updated });
 });
 
 app.patch("/appointments/:id/reject", requireSession, async (request: AuthenticatedRequest, response) => {
@@ -1270,8 +1269,8 @@ app.patch("/appointments/:id/reject", requireSession, async (request: Authentica
   });
 
   await notifyUser(updated.buyerId, {
-    title: "တောင်းဆိုမှု ငြင်းပယ်ခံရပါသည်",
-    body: `"${updated.book.title}" အတွက် တောင်းဆိုမှုကို ငြင်းပယ်ပါသည်။`,
+    title: "ကမ်းလှမ်းချက် ငြင်းပယ်ခံရပါသည် 😔",
+    body: `စိတ်မကောင်းပါဘူး၊ ရောင်းသူက သင့်ရဲ့ "${updated.book.title}" ကမ်းလှမ်းချက်ကို ငြင်းပယ်လိုက်ပါတယ်။`,
     data: { appointmentId: updated.id },
   });
   response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှုကို ငြင်းပယ်လိုက်ပါပြီ။", appointment: updated });
