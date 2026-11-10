@@ -1134,8 +1134,8 @@ app.post("/appointments", requireSession, async (request: AuthenticatedRequest, 
 
   const buyerName = appointment.buyer.name || "ကျောင်းသား";
   await notifyUser(book.sellerId, {
-    title: "ဝယ်ယူရန် တောင်းဆိုမှုအသစ်",
-    body: `သင့်စာအုပ် "${appointment.book.title}" ကို ဝယ်ယူရန် ${buyerName} က တောင်းဆိုထားပါသည်။`,
+    title: "ဝယ်သူအသစ် ရောက်လာပါပြီ 🔔",
+    body: `သင့်ရဲ့ "${appointment.book.title}" စာအုပ်ကို လိုချင်တဲ့ ဝယ်သူ ${buyerName} ရောက်လာပါပြီ။`,
     data: { appointmentId: appointment.id },
   });
   response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှု ပို့ပြီးပါပြီ။", appointment });
@@ -1243,8 +1243,8 @@ app.patch("/appointments/:id/accept", requireSession, async (request: Authentica
   });
 
   await notifyUser(updated.buyerId, {
-    title: "ကမ်းလှမ်းချက်ကို လက်ခံလိုက်ပါပြီ 🎉",
-    body: `ရောင်းသူက သင့်ရဲ့ "${updated.book.title}" ကမ်းလှမ်းချက်ကို လက်ခံလိုက်ပါပြီ။`,
+    title: "တောင်းဆိုမှု လက်ခံပြီးပါပြီ 🎉",
+    body: `"${updated.book.title}" အတွက် တောင်းဆိုမှုကို ရောင်းသူက လက်ခံပါပြီ။`,
     data: { appointmentId: updated.id },
   });
   response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှုကို လက်ခံလိုက်ပါပြီ။", appointment: updated });
@@ -1269,8 +1269,8 @@ app.patch("/appointments/:id/reject", requireSession, async (request: Authentica
   });
 
   await notifyUser(updated.buyerId, {
-    title: "ကမ်းလှမ်းချက် ငြင်းပယ်ခံရပါသည် 😔",
-    body: `စိတ်မကောင်းပါဘူး၊ ရောင်းသူက သင့်ရဲ့ "${updated.book.title}" ကမ်းလှမ်းချက်ကို ငြင်းပယ်လိုက်ပါတယ်။`,
+    title: "တောင်းဆိုမှု ငြင်းပယ်ခံရပါသည် 😔",
+    body: `စိတ်မကောင်းပါဘူး၊ "${updated.book.title}" အတွက် တောင်းဆိုမှုကို ရောင်းသူက ငြင်းပယ်လိုက်ပါတယ်။`,
     data: { appointmentId: updated.id },
   });
   response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှုကို ငြင်းပယ်လိုက်ပါပြီ။", appointment: updated });
