@@ -124,7 +124,7 @@ export default function AddBookModal({
       <View style={styles.backdrop}>
         <KeyboardAvoidingView
           style={styles.keyboardAvoiding}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
         <View
           style={[

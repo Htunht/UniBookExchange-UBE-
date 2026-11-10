@@ -4,6 +4,26 @@ import { Platform } from "react-native";
 
 let handlerReady = false;
 
+const notificationsModulePromise =
+  Platform.OS === "web"
+    ? null
+    : import("expo-notifications").then((Notifications) => {
+        try {
+          Notifications.setNotificationHandler({
+            handleNotification: async () => ({
+              shouldPlaySound: true,
+              shouldSetBadge: false,
+              shouldShowBanner: true,
+              shouldShowList: true,
+            }),
+          });
+          handlerReady = true;
+        } catch {
+          // Keep notification registration available if the handler cannot be set.
+        }
+        return Notifications;
+      });
+
 function isExpoGoAndroid() {
   return (
     Platform.OS === "android" &&
@@ -12,7 +32,8 @@ function isExpoGoAndroid() {
 }
 
 async function prepareLocalNotifications() {
-  const Notifications = await import("expo-notifications");
+  if (!notificationsModulePromise) return null;
+  const Notifications = await notificationsModulePromise;
   if (!handlerReady) {
     try {
       Notifications.setNotificationHandler({
