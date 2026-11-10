@@ -1132,14 +1132,13 @@ app.post("/appointments", requireSession, async (request: AuthenticatedRequest, 
     },
   });
 
-  response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှု ပို့ပြီးပါပြီ။", appointment });
-
   const buyerName = appointment.buyer.name || "ကျောင်းသား";
   await notifyUser(book.sellerId, {
-    title: "ဝယ်ယူရန် တောင်းဆိုမှု",
-    body: `${buyerName} က "${appointment.book.title}" ကို ဝယ်ချင်ပါသည်။`,
+    title: "ဝယ်ယူရန် တောင်းဆိုမှုအသစ်",
+    body: `သင့်စာအုပ် "${appointment.book.title}" ကို ဝယ်ယူရန် ${buyerName} က တောင်းဆိုထားပါသည်။`,
     data: { appointmentId: appointment.id },
   });
+  response.json({ message: "ဝယ်ယူရန် တောင်းဆိုမှု ပို့ပြီးပါပြီ။", appointment });
 });
 
 app.get("/appointments/incoming", requireSession, async (request: AuthenticatedRequest, response) => {

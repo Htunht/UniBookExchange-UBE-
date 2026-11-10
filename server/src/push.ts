@@ -15,16 +15,16 @@ type ExpoPushTicket = {
 };
 
 export async function notifyUser(userId: string, message: PushMessage): Promise<void> {
-  const registrations = await prisma.pushToken.findMany({
-    where: { userId },
-    select: { token: true },
-  });
-  if (registrations.length === 0) {
-    console.info("Push skipped: recipient has no registered devices.");
-    return;
-  }
-
   try {
+    const registrations = await prisma.pushToken.findMany({
+      where: { userId },
+      select: { token: true },
+    });
+    if (registrations.length === 0) {
+      console.info("Push skipped: recipient has no registered devices.");
+      return;
+    }
+
     const response = await fetch(expoPushUrl, {
       method: "POST",
       headers: {
