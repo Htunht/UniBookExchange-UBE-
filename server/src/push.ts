@@ -38,6 +38,7 @@ export async function notifyUser(userId: string, message: PushMessage): Promise<
           title: message.title,
           body: message.body,
           sound: "default",
+          priority: "high",
           channelId: "appointments",
           data: message.data ?? {},
         })),

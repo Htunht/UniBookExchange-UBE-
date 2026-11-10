@@ -53,7 +53,7 @@ export default function BookCard({
         <Text style={styles.detailText}>{getMajorLabel(book.major)}</Text>
         <Text style={styles.detailText}>{getYearLabel(book.year)}</Text>
         {isFree ? (
-          <Text style={styles.freeText}>အခမဲ့</Text>
+          <Text style={styles.freeText}>ညှိနှိုင်းမည်</Text>
         ) : (
           <Text style={styles.priceText}>{book.price.toLocaleString()} ကျပ်</Text>
         )}

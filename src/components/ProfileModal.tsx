@@ -355,7 +355,7 @@ export default function ProfileModal({
                     <Text style={styles.myBookSub}>
                       {getMajorLabel(b.major)} • {getYearLabel(b.year)} •{" "}
                       {b.price === 0
-                        ? "အခမဲ့"
+                        ? "ညှိနှိုင်းမည်"
                         : `${b.price.toLocaleString()} ကျပ်`}
                     </Text>
                     <View

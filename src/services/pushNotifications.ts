@@ -70,6 +70,20 @@ export async function notifyAppointmentAccepted(bookTitle: string) {
   });
 }
 
+export async function notifyAppointmentRejected(bookTitle: string) {
+  if (Platform.OS === "web") return;
+  const Notifications = await prepareLocalNotifications();
+  if (!Notifications) return;
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "ကမ်းလှမ်းချက် ငြင်းပယ်ခံရပါသည် 😔",
+      body: `စိတ်မကောင်းပါဘူး၊ ရောင်းသူက သင့်ရဲ့ "${bookTitle}" ကမ်းလှမ်းချက်ကို ငြင်းပယ်လိုက်ပါတယ်။`,
+    },
+    trigger: null,
+  });
+}
+
 export async function registerDeviceForPush(): Promise<string | null> {
   if (Platform.OS === "web" || !Device.isDevice || isExpoGoAndroid()) return null;
 

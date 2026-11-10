@@ -31,6 +31,7 @@ import {
 } from "../services/api";
 import {
   notifyAppointmentAccepted,
+  notifyAppointmentRejected,
   registerDeviceForPush,
 } from "../services/pushNotifications";
 import {
@@ -106,12 +107,16 @@ export default function DashboardView({
     for (const appointment of myRequests) {
       const priorStatus = previous.get(appointment.id);
       if (
-        appointment.status === "ACCEPTED" &&
+        (appointment.status === "ACCEPTED" || appointment.status === "REJECTED") &&
         !seenNotificationIds.includes(appointment.id) &&
         priorStatus &&
-        priorStatus !== "ACCEPTED"
+        priorStatus !== appointment.status
       ) {
-        void notifyAppointmentAccepted(appointment.book.title);
+        if (appointment.status === "ACCEPTED") {
+          void notifyAppointmentAccepted(appointment.book.title);
+        } else {
+          void notifyAppointmentRejected(appointment.book.title);
+        }
       }
     }
   }, [myRequests, seenNotificationIds]);

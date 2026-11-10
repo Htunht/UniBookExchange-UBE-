@@ -225,7 +225,7 @@ export default function BookDetailModal({
               <Text style={styles.priceLabel}>ဈေးနှုန်း</Text>
               {isFree ? (
                 <View style={styles.freeBadge}>
-                  <Text style={styles.freeText}>အခမဲ့</Text>
+                  <Text style={styles.freeText}>ညှိနှိုင်းမည်</Text>
                 </View>
               ) : (
                 <Text style={styles.priceValue}>

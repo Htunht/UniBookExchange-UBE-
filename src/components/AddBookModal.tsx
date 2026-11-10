@@ -225,13 +225,13 @@ export default function AddBookModal({
             <View style={styles.priceHeader}>
               <Text style={styles.label}>ဈေးနှုန်း (ကျပ်)</Text>
               <View style={styles.freeToggle}>
-                <Text style={styles.freeToggleText}>အခမဲ့ ပေးမည်</Text>
+                <Text style={styles.freeToggleText}>ညှိနှိုင်းမည်</Text>
                 <Switch
                   value={isFree}
                   onValueChange={setIsFree}
                   trackColor={{ false: "#CBD5E1", true: "#7DD3FC" }}
                   thumbColor={isFree ? "#0284C7" : "#F8FAFC"}
-                  accessibilityLabel="အခမဲ့ ပေးမည်ကို ရွေးရန်"
+                  accessibilityLabel="ညှိနှိုင်းမည်ကို ရွေးရန်"
                 />
               </View>
             </View>
