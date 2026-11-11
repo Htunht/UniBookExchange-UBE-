@@ -65,6 +65,11 @@ export default function DashboardView({
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMoreBooks, setHasMoreBooks] = useState(false);
+  const nextBookPageRef = useRef(2);
+  const bookRequestIdRef = useRef(0);
+  const loadingMoreRef = useRef(false);
   const [updatingBookStatusId, setUpdatingBookStatusId] = useState<string | null>(null);
 
   // The shelf shows other users' books; "my-books" contains this user's listings.
@@ -181,13 +186,21 @@ export default function DashboardView({
 
   // Fetch books from server
   const fetchBooks = useCallback(async () => {
+    const requestId = ++bookRequestIdRef.current;
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
     try {
       const res = await getBooks({
         search: searchQuery.trim() || undefined,
         major: selectedMajor === "All" ? undefined : selectedMajor,
         year: selectedYear === "All Years" ? undefined : selectedYear,
+        page: 1,
+        limit: 20,
       });
+      if (requestId !== bookRequestIdRef.current) return;
       setBooks(res.books);
+      nextBookPageRef.current = 2;
+      setHasMoreBooks(res.hasMore);
       networkDialogShownRef.current = false;
     } catch (error) {
       console.error("Fetch books failed:", error);
@@ -200,6 +213,33 @@ export default function DashboardView({
       setRefreshing(false);
     }
   }, [searchQuery, selectedMajor, selectedYear, showDialog]);
+
+  const loadMoreBooks = useCallback(async () => {
+    if (!hasMoreBooks || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    const requestId = bookRequestIdRef.current;
+    try {
+      const res = await getBooks({
+        search: searchQuery.trim() || undefined,
+        major: selectedMajor === "All" ? undefined : selectedMajor,
+        year: selectedYear === "All Years" ? undefined : selectedYear,
+        page: nextBookPageRef.current,
+        limit: 20,
+      });
+      if (requestId !== bookRequestIdRef.current) return;
+      setBooks((current) => [...current, ...res.books]);
+      nextBookPageRef.current = res.page + 1;
+      setHasMoreBooks(res.hasMore);
+    } catch (error) {
+      console.error("Load more books failed:", error);
+    } finally {
+      if (requestId === bookRequestIdRef.current) {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      }
+    }
+  }, [hasMoreBooks, searchQuery, selectedMajor, selectedYear]);
 
   // Fetch user profile and my books
   const fetchUserData = useCallback(async () => {
@@ -464,7 +504,10 @@ export default function DashboardView({
           currentUserId={userProfile?.id}
           loading={loading}
           refreshing={refreshing}
+          loadingMore={loadingMore}
+          hasMore={hasMoreBooks}
           onRefresh={onRefresh}
+          onLoadMore={loadMoreBooks}
           onOpenBook={setSelectedBook}
           onAddBook={openAddBook}
           onEditBook={(book) => {

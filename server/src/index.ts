@@ -876,6 +876,13 @@ const createBookSchema = z.object({
 
 app.get("/books", async (request, response) => {
   const { search, major, year } = request.query;
+  const pageValue = typeof request.query.page === "string" ? Number(request.query.page) : 1;
+  const limitValue = typeof request.query.limit === "string" ? Number(request.query.limit) : 20;
+  if (!Number.isInteger(pageValue) || pageValue < 1 || !Number.isInteger(limitValue) || limitValue < 1) {
+    throw new HttpError(400, "Page and limit must be positive integers.");
+  }
+  const page = pageValue;
+  const limit = Math.min(limitValue, 50);
 
   const where: Record<string, unknown> = {};
   if (typeof search === "string" && search.trim()) {
@@ -903,6 +910,8 @@ app.get("/books", async (request, response) => {
   const books = await prisma.book.findMany({
     where,
     orderBy: { createdAt: "desc" },
+    skip: (page - 1) * limit,
+    take: limit,
     include: {
       seller: {
         select: {
@@ -913,7 +922,7 @@ app.get("/books", async (request, response) => {
     },
   });
 
-  response.json({ books });
+  response.json({ books, page, limit, hasMore: books.length === limit });
 });
 
 app.post("/books", requireSession, async (request: AuthenticatedRequest, response) => {

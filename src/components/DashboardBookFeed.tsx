@@ -19,7 +19,10 @@ interface DashboardBookFeedProps {
   currentUserId?: string;
   loading: boolean;
   refreshing: boolean;
+  loadingMore: boolean;
+  hasMore: boolean;
   onRefresh: () => void;
+  onLoadMore: () => void;
   onOpenBook: (book: Book) => void;
   onAddBook: () => void;
   onEditBook: (book: Book) => void;
@@ -32,7 +35,10 @@ export default function DashboardBookFeed({
   currentUserId,
   loading,
   refreshing,
+  loadingMore,
+  hasMore,
   onRefresh,
+  onLoadMore,
   onOpenBook,
   onAddBook,
   onEditBook,
@@ -81,6 +87,15 @@ export default function DashboardBookFeed({
         contentContainerStyle={styles.bookList}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        onEndReached={() => {
+          if (hasMore && !loadingMore) onLoadMore();
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator style={{ padding: 16 }} color="#0284C7" />
+          ) : undefined
         }
         renderItem={({ item }) => (
           <BookCard

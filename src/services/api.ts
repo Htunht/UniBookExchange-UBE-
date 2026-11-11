@@ -251,11 +251,15 @@ export function getBooks(filters?: {
   search?: string;
   major?: string;
   year?: string;
-}): Promise<{ books: Book[] }> {
+  page?: number;
+  limit?: number;
+}): Promise<{ books: Book[]; page: number; limit: number; hasMore: boolean }> {
   const query = new URLSearchParams();
   if (filters?.search) query.set("search", filters.search);
   if (filters?.major) query.set("major", filters.major);
   if (filters?.year) query.set("year", filters.year);
+  if (filters?.page) query.set("page", String(filters.page));
+  if (filters?.limit) query.set("limit", String(filters.limit));
 
   const queryString = query.toString();
   const endpoint = queryString ? `/books?${queryString}` : "/books";
